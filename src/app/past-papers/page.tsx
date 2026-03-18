@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Target, FileText, CheckCircle2, TrendingUp, Filter, PlayCircle } from 'lucide-react';
+import { Target, FileText, CheckCircle2, TrendingUp, Filter, PlayCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PastPapersPage() {
