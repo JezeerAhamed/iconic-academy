@@ -1,0 +1,2 @@
+﻿src/app/api/stripe/webhook/route.ts(56,65): error TS2339: Property 'current_period_end' does not exist on type 'Response<Subscription>'.
+src/app/api/stripe/webhook/route.ts(86,65): error TS2339: Property 'current_period_end' does not exist on type 'Subscription'.

@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { UpgradeModal } from '@/lib/subscriptions';
 import { awardXP } from '@/lib/gamification';
 
 import ReactMarkdown from 'react-markdown';
@@ -200,25 +201,10 @@ export default function LessonClient({ data }: LessonClientProps) {
                     </ReactMarkdown>
                 </article>
 
-                {/* Subscription Gate Overlay */}
+                {/* Premium Gate Overlay */}
                 {isPremiumLocked && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-t from-[#080c14] via-[#080c14]/80 to-transparent">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-[#0b101a] border border-indigo-500/30 rounded-2xl p-8 max-w-md text-center shadow-[0_0_50px_-12px_rgba(99,102,241,0.3)]"
-                        >
-                            <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center mx-auto mb-6 text-indigo-400">
-                                <Lock className="w-8 h-8" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-white mb-3">Premium Content</h2>
-                            <p className="text-slate-400 mb-8">
-                                You've reached the free limit for this unit. Unlock all lessons, video explanations, and the complete syllabus.
-                            </p>
-                            <button className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-lg hover:from-indigo-600 hover:to-purple-600 transition-all shadow-lg hover:shadow-indigo-500/25">
-                                Upgrade to Basic Plan (Rs 990/mo)
-                            </button>
-                        </motion.div>
+                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#080c14] via-[#080c14]/90 to-transparent flex flex-col items-center justify-end pb-32 z-10">
+                        <UpgradeModal required="basic" />
                     </div>
                 )}
             </div>

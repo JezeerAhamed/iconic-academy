@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { geminiModel, safeGeminiCall } from '@/lib/gemini';
+import { adminDb } from '@/lib/firebase-admin';
 
 export const runtime = 'edge';
 
@@ -13,6 +14,26 @@ export async function POST(req: Request) {
                 role: 'assistant',
                 content: `*(Mock Response - API Key Missing)*\n\nI see you're asking about **${context || 'your A/L studies'}** at the **${level || 'Beginner'}** level. To make this AI functional, please ensure GEMINI_API_KEY is properly set.`
             });
+        }
+
+        const userId = req.headers.get('x-user-id'); // Read from custom header if passed from client
+        if (userId) {
+            const userDoc = await adminDb.collection('users').doc(userId).get();
+            const plan = userDoc.data()?.plan || 'free';
+            if (plan === 'free') {
+                const today = new Date().toISOString().split('T')[0];
+                const trackRef = adminDb.collection('usage').doc(`${userId}_${today}`);
+                const trackDoc = await trackRef.get();
+                const count = trackDoc.exists ? (trackDoc.data()?.chatCount || 0) : 0;
+
+                if (count >= 10) {
+                    return NextResponse.json({
+                        role: 'assistant',
+                        content: `**Daily Limit Reached! 🛑**\n\nYou've used your 10 free AI Tutor messages for today. \n\nUpgrade to the **Basic** plan for unlimited, personalized AI tutoring on every problem!`
+                    });
+                }
+                await trackRef.set({ chatCount: count + 1 }, { merge: true });
+            }
         }
 
         // Map openai role format to Gemini's user/model format
