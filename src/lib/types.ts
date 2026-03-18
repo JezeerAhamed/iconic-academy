@@ -5,7 +5,7 @@
 export type SubjectId = 'physics' | 'chemistry' | 'biology' | 'maths';
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ContentType = 'video' | 'text' | 'mixed';
-export type ProgressStatus = 'not_started' | 'in_progress' | 'mastered';
+export type ProgressStatus = 'not_started' | 'practicing' | 'proficient' | 'mastered';
 export type UserLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Ranker';
 export type SubscriptionPlan = 'free' | 'pro' | 'elite';
 
