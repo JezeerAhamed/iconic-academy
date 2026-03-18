@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ type Message = {
     content: string;
 };
 
-export default function AITutorPage() {
+function AITutorContent() {
     const { profile } = useAuth();
     const searchParams = useSearchParams();
     const contextParam = searchParams.get('context');
@@ -165,8 +165,8 @@ export default function AITutorPage() {
                             >
                                 {/* Avatar */}
                                 <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 border ${m.role === 'user'
-                                        ? 'bg-indigo-600 border-indigo-500'
-                                        : 'bg-[#1a1f2e] border-white/10'
+                                    ? 'bg-indigo-600 border-indigo-500'
+                                    : 'bg-[#1a1f2e] border-white/10'
                                     }`}>
                                     {m.role === 'user' ? <User className="w-5 h-5 text-white" /> : <BrainCircuit className="w-5 h-5 text-indigo-400" />}
                                 </div>
@@ -174,8 +174,8 @@ export default function AITutorPage() {
                                 {/* Bubble */}
                                 <div className="flex flex-col gap-1 items-start group">
                                     <div className={`p-4 rounded-2xl text-sm sm:text-base ${m.role === 'user'
-                                            ? 'bg-indigo-600 text-white rounded-tr-none'
-                                            : 'bg-white/5 text-slate-200 rounded-tl-none border border-white/5'
+                                        ? 'bg-indigo-600 text-white rounded-tr-none'
+                                        : 'bg-white/5 text-slate-200 rounded-tl-none border border-white/5'
                                         }`}>
                                         {m.role === 'assistant' ? (
                                             <div className="prose prose-invert prose-indigo max-w-none prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:border prose-pre:border-white/10 prose-headings:text-white">
@@ -250,5 +250,13 @@ export default function AITutorPage() {
                 </div>
             </Card>
         </div>
+    );
+}
+
+export default function AITutorPage() {
+    return (
+        <Suspense fallback={<div className="h-full flex items-center justify-center text-indigo-400">Loading AI Tutor...</div>}>
+            <AITutorContent />
+        </Suspense>
     );
 }
