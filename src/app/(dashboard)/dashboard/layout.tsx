@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
+import Breadcrumbs from '@/components/layout/Breadcrumbs';
+import MobileBottomNav from '@/components/layout/MobileBottomNav';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +16,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!loading && !user) {
             router.push('/auth/login');
         } else if (!loading && user && profile && !profile.onboardingComplete) {
-            // User hasn't finished onboarding
             router.push('/onboarding');
         }
     }, [user, profile, loading, router]);
@@ -27,7 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
-    // Prevent rendering dashboard if profile is missing onboardingComplete
     if (profile && !profile.onboardingComplete) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -38,15 +38,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#080c14]">
-            {/* Sidebar Navigation */}
+            {/* Sidebar Navigation (hidden on mobile) */}
             <Sidebar />
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto pl-0 md:pl-64 pt-16 md:pt-0">
+            <main className="flex-1 overflow-y-auto pl-0 md:pl-64 pt-14 md:pt-0 pb-16 md:pb-0">
                 <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                    <Breadcrumbs />
                     {children}
                 </div>
             </main>
+
+            {/* Mobile Bottom Tab Bar */}
+            <MobileBottomNav />
         </div>
     );
 }

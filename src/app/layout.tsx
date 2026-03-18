@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "@/components/Providers";
+import TopNavbar from "@/components/layout/TopNavbar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -67,9 +66,8 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} antialiased bg-[#080c14] text-slate-100`}>
         <Providers>
-          <Navbar />
+          <TopNavbar />
           <main className="min-h-screen">{children}</main>
-          <Footer />
           <Toaster
             position="top-right"
             toastOptions={{

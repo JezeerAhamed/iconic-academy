@@ -83,7 +83,7 @@ export default function DashboardSubjectsPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {subjects.map((subject, i) => {
-                    const isEnrolled = profile?.subjects.includes(subject.id);
+                    const isEnrolled = profile?.enrolledSubjects?.includes(subject.id);
                     const completedLessons = progressMap[subject.id] || 0;
                     const totalLessons = subject.lessonCount || 1;
                     const progressPercent = Math.min(100, Math.round((completedLessons / totalLessons) * 100));
