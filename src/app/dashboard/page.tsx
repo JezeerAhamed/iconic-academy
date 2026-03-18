@@ -5,12 +5,16 @@ import { SUBJECTS } from '@/lib/constants';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Zap, Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, BookOpen } from 'lucide-react';
+import { Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { getLevelProgress } from '@/lib/gamification';
 
 export default function DashboardOverview() {
     const { profile } = useAuth();
+
+    // Process Gamification Data
+    const progressData = getLevelProgress(profile?.xp || 0, profile?.level || 'Beginner');
 
     // Just for nice greeting based on time of day
     const hour = new Date().getHours();
@@ -30,16 +34,79 @@ export default function DashboardOverview() {
                     <p className="text-slate-400">Ready to crush your A/L {profile?.examYear} goals today?</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 font-medium">
-                        <Flame className="w-4 h-4" />
-                        <span>{profile?.streak || 0} Day Streak</span>
+            </div>
+
+            {/* Gamification Dashboard Widget */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                {/* Main Progress Card */}
+                <Card className="p-6 col-span-1 lg:col-span-2 bg-[#0b101a] border-white/10 relative overflow-hidden flex flex-col justify-center">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+
+                        {/* Level Shield */}
+                        <div className="relative flex shrink-0 items-center justify-center w-36 h-36">
+                            <div className="absolute inset-0 bg-indigo-500/10 rounded-full animate-pulse" />
+                            <div className="w-28 h-28 rounded-full bg-[#1a1f2e] border border-indigo-500/50 flex flex-col items-center justify-center z-10 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+                                <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-0.5">Level</span>
+                                <span className="text-4xl font-black text-white">{Math.floor((profile?.xp || 0) / 1000) + 1}</span>
+                            </div>
+                            {/* Circular Progress Ring */}
+                            <svg className="absolute inset-0 w-full h-full -rotate-90">
+                                <circle cx="72" cy="72" r="66" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+                                <circle cx="72" cy="72" r="66" fill="none" stroke="currentColor" strokeWidth="6"
+                                    className="text-indigo-500 transition-all duration-1000 ease-out"
+                                    strokeDasharray="414"
+                                    strokeDashoffset={414 - (414 * progressData.percentage) / 100}
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                        </div>
+
+                        {/* XP Details */}
+                        <div className="flex-1 text-center md:text-left">
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-3">
+                                <Trophy className="w-3.5 h-3.5" /> {profile?.level || 'Beginner'} Rank
+                            </div>
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                                Level up your knowledge! 🚀
+                            </h3>
+                            <p className="text-slate-400 mb-6 text-sm max-w-md">
+                                You are <strong className="text-white">{progressData.requiredXP - progressData.currentXPInLevel} XP</strong> away from reaching the next rank. Keep crushing those lessons!
+                            </p>
+
+                            {/* Quick Stats Grid */}
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-8">
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-widest">Total XP</p>
+                                    <p className="text-xl font-bold text-indigo-400">{profile?.xp || 0}</p>
+                                </div>
+                                <div className="w-px h-8 bg-white/10 hidden sm:block" />
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-widest">Lessons</p>
+                                    <p className="text-xl font-bold text-white">42</p>
+                                </div>
+                                <div className="w-px h-8 bg-white/10 hidden sm:block" />
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] text-emerald-500/70 mb-1 uppercase font-bold tracking-widest">Accuracy</p>
+                                    <p className="text-xl font-bold text-emerald-400">88%</p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-medium">
-                        <Trophy className="w-4 h-4" />
-                        <span>Level {Math.floor((profile?.xp || 0) / 1000) + 1}</span>
+                </Card>
+
+                {/* Streak Card */}
+                <Card className="p-6 bg-gradient-to-br from-orange-500/10 to-[#0b101a] border-orange-500/20 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.03] pointer-events-none" />
+                    <div className="w-20 h-20 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-orange-500/20 transition-all shadow-[0_0_30px_rgba(249,115,22,0.15)]">
+                        <Flame className="w-10 h-10" />
                     </div>
-                </div>
+                    <h3 className="text-5xl font-black text-white mb-1 shadow-orange-500/50 drop-shadow-md">{profile?.streak || 0}</h3>
+                    <p className="text-orange-300/80 font-bold tracking-widest uppercase text-sm mb-4">Day Streak</p>
+                    <p className="text-xs text-slate-400 max-w-[200px]">Complete a lesson or practice today to keep your fire lit! 🔥</p>
+                </Card>
             </div>
 
             {/* Quick Actions */}
