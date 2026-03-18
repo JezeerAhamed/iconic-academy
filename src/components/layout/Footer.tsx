@@ -2,11 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import { Zap, Twitter, Instagram, Youtube, Mail, Phone } from 'lucide-react';
 import { SUBJECTS } from '@/lib/constants';
 
 export default function Footer() {
     const pathname = usePathname();
+    const { user } = useAuth();
+
+    const isAdmin = user?.email === 'tharushapawan78@gmail.com' || (user as any)?.role === 'admin';
 
     // Hide marketing footer inside the authenticated app
     if (pathname?.startsWith('/dashboard')) {
@@ -66,21 +70,23 @@ export default function Footer() {
                         <h4 className="text-white font-semibold text-sm tracking-wide">Platform</h4>
                         <ul className="space-y-2.5">
                             {[
-                                { label: 'AI Tutor', href: '/ai-tutor' },
-                                { label: 'Past Papers', href: '/past-papers' },
+                                { label: 'AI Tutor', href: '/dashboard/ai-tutor' },
+                                { label: 'Past Papers', href: '/dashboard/past-papers' },
                                 { label: 'Progress Tracker', href: '/dashboard' },
                                 { label: 'Pricing', href: '/pricing' },
-                                { label: 'Admin', href: '/admin' },
-                            ].map(({ label, href }) => (
-                                <li key={href}>
-                                    <Link
-                                        href={href}
-                                        className="text-slate-500 hover:text-white text-sm transition-colors group"
-                                    >
-                                        <span className="group-hover:translate-x-0.5 inline-block transition-transform duration-200">{label}</span>
-                                    </Link>
-                                </li>
-                            ))}
+                                isAdmin ? { label: 'Admin Dashboard', href: '/admin' } : null,
+                            ]
+                                .filter((item): item is { label: string; href: string } => item !== null)
+                                .map(({ label, href }) => (
+                                    <li key={href}>
+                                        <Link
+                                            href={href}
+                                            className="text-slate-500 hover:text-white text-sm transition-colors group"
+                                        >
+                                            <span className="group-hover:translate-x-0.5 inline-block transition-transform duration-200">{label}</span>
+                                        </Link>
+                                    </li>
+                                ))}
                         </ul>
                     </div>
 

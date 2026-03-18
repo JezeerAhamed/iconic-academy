@@ -44,7 +44,7 @@ export default function PricingPage() {
 
     const handleCheckout = async (planKey: string) => {
         if (!user) {
-            router.push('/auth/signup');
+            router.push(`/auth/signup?plan=${planKey}`);
             return;
         }
 
@@ -156,24 +156,29 @@ export default function PricingPage() {
                                     ))}
                                 </ul>
 
-                                <button
-                                    onClick={() => handleCheckout(key)}
-                                    disabled={loadingPlan !== null || !!isCurrentPlan}
-                                    className={`w-full py-4 rounded-xl font-bold transition-all shadow-lg mt-auto flex items-center justify-center gap-2 ${isCurrentPlan
-                                        ? 'bg-white/5 border border-white/10 text-slate-400 cursor-not-allowed'
-                                        : key === 'premium'
-                                            ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/25'
-                                            : 'bg-white/10 hover:bg-white/20 text-white'
-                                        }`}
-                                >
-                                    {loadingPlan === key
-                                        ? 'Opening Checkout...'
-                                        : isCurrentPlan
-                                            ? 'Current Plan'
-                                            : key === 'free' && !user
-                                                ? 'Sign Up Free'
-                                                : 'Upgrade Now'}
-                                </button>
+                                <div className="mt-auto">
+                                    <button
+                                        onClick={() => handleCheckout(key)}
+                                        disabled={loadingPlan !== null || !!isCurrentPlan}
+                                        className={`w-full py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${isCurrentPlan
+                                            ? 'bg-white/5 border border-white/10 text-slate-400 cursor-not-allowed'
+                                            : key === 'premium'
+                                                ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/25'
+                                                : 'bg-white/10 hover:bg-white/20 text-white'
+                                            }`}
+                                    >
+                                        {loadingPlan === key
+                                            ? 'Opening Checkout...'
+                                            : isCurrentPlan
+                                                ? 'Current Plan'
+                                                : key === 'free' && !user
+                                                    ? 'Sign Up Free'
+                                                    : 'Get Started'}
+                                    </button>
+                                    {!isCurrentPlan && (
+                                        <p className="text-[10px] text-center text-slate-500 mt-3 uppercase tracking-wider font-medium">Cancel anytime. No hidden fees.</p>
+                                    )}
+                                </div>
                             </motion.div>
                         );
                     })}
