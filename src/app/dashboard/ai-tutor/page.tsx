@@ -79,7 +79,10 @@ function AITutorContent() {
                 }),
             });
 
-            if (!response.ok) throw new Error('API request failed');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'API request failed with status ' + response.status);
+            }
 
             const data = await response.json();
 
@@ -90,9 +93,11 @@ function AITutorContent() {
                 setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
             }
 
-        } catch (error) {
-            toast.error('Failed to communicate with AI');
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please try again later.' }]);
+        } catch (error: any) {
+            console.error("Chat API error:", error);
+            const errorMsg = error.message || 'Failed to communicate with AI';
+            toast.error(errorMsg);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errorMsg}` }]);
         } finally {
             setIsLoading(false);
         }
