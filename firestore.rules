@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read and write their own profile document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users can read and write their own gamification document
+    match /gamification/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Subscriptions: read-only for the owning user (written server-side via webhook)
+    match /subscriptions/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Subjects and units are publicly readable
+    match /subjects/{subjectId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /units/{unitId} {
+        allow read: if true;
+        allow write: if false;
+
+        match /lessons/{lessonId} {
+          allow read: if request.auth != null;
+          allow write: if false;
+        }
+      }
+    }
+
+    // Student progress: only the owning user can read/write
+    match /studentProgress/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // AI usage tracking: server-side only
+    match /usage/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
