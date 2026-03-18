@@ -88,19 +88,27 @@ A physical quantity can be expressed as a value, which is the algebraic multipli
 
     return (
         <div className="pb-20 max-w-5xl mx-auto">
-            {/* Header Navigation */}
-            <div className="flex items-center justify-between mb-6">
-                <Link href={`/dashboard/subjects/${subjectId}`} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
-                    <ChevronLeft className="w-4 h-4" /> Back to Syllabus
-                </Link>
+            {/* Header Navigation - Breadcrumbs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div className="flex items-center gap-2 text-sm text-slate-400 flex-wrap">
+                    <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+                    <ChevronRight className="w-4 h-4" />
+                    <Link href="/dashboard/subjects" className="hover:text-white transition-colors">Subjects</Link>
+                    <ChevronRight className="w-4 h-4" />
+                    <Link href={`/dashboard/subjects/${subjectId}`} className="hover:text-white transition-colors">{subject.name}</Link>
+                    <ChevronRight className="w-4 h-4" />
+                    <span className="text-white truncate max-w-[200px]">{lesson.title}</span>
+                </div>
 
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="bg-transparent border-white/10 text-slate-300 hover:bg-white/5 hover:text-white" disabled>
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+                <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="sm" className="bg-transparent border-white/10 text-slate-300 hover:bg-white/5 hover:text-white transition-colors" disabled>
+                        <ChevronLeft className="w-4 h-4 mr-1" /> Previous Lesson
                     </Button>
-                    <Button variant="outline" size="sm" className="bg-transparent border-white/10 text-slate-300 hover:bg-white/5 hover:text-white">
-                        Next <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
+                    <Link href={`/dashboard/subjects/${subjectId}`}>
+                        <Button size="sm" className="bg-white hover:bg-slate-200 text-black font-semibold transition-colors shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)]">
+                            Next Lesson <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                    </Link>
                 </div>
             </div>
 
@@ -191,8 +199,15 @@ A physical quantity can be expressed as a value, which is the algebraic multipli
                         <h3 className="font-bold text-white mb-4">Your Progress</h3>
 
                         {isCompleted ? (
-                            <div className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                                <CheckCircle2 className="w-5 h-5" /> Completed
+                            <div className="space-y-3">
+                                <div className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                                    <CheckCircle2 className="w-5 h-5" /> Completed
+                                </div>
+                                <Link href={`/dashboard/subjects/${subjectId}`} className="block">
+                                    <Button className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-[0_0_20px_-5px_rgba(79,70,229,0.4)]">
+                                        Continue Learning <ChevronRight className="w-5 h-5 ml-1" />
+                                    </Button>
+                                </Link>
                             </div>
                         ) : (
                             <Button

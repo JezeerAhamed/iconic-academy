@@ -31,12 +31,26 @@ function AITutorContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
 
+    const QUICK_PROMPTS = [
+        "Explain this concept with an analogy",
+        "Give me a step-by-step example",
+        "Test me with a hard question",
+        "Summarize the key formulas"
+    ];
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom of chat
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    const sendQuickPrompt = (promptText: string) => {
+        if (isLoading) return;
+        setInput('');
+        setMessages(prev => [...prev, { role: 'user', content: promptText }]);
+        triggerChatApi(promptText);
+    };
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -45,6 +59,10 @@ function AITutorContent() {
         const userMessage = input.trim();
         setInput('');
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+        triggerChatApi(userMessage);
+    };
+
+    const triggerChatApi = async (userMessage: string) => {
         setIsLoading(true);
 
         try {
@@ -199,6 +217,26 @@ function AITutorContent() {
                             </motion.div>
                         ))}
                     </AnimatePresence>
+
+                    {/* Quick Prompts (Only show at the start of conversation) */}
+                    {messages.length === 1 && !isLoading && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="flex flex-wrap gap-2 mt-4 ml-12 sm:ml-14"
+                        >
+                            {QUICK_PROMPTS.map((prompt, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => sendQuickPrompt(prompt)}
+                                    className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-sm rounded-full border border-indigo-500/20 transition-colors text-left"
+                                >
+                                    {prompt}
+                                </button>
+                            ))}
+                        </motion.div>
+                    )}
 
                     {isLoading && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 max-w-[85%]">

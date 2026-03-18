@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { SUBJECTS, SYLLABUS } from '@/lib/constants';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ChevronLeft, CheckCircle2, PlayCircle, Lock, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, PlayCircle, Lock, BookOpen } from 'lucide-react';
 
 export default function SubjectDetailPage() {
     const params = useParams();
@@ -21,9 +21,13 @@ export default function SubjectDetailPage() {
         <div className="pb-20">
             {/* Header */}
             <div className="mb-8">
-                <Link href="/dashboard/subjects" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-6">
-                    <ChevronLeft className="w-4 h-4" /> Back to Subjects
-                </Link>
+                <div className="flex items-center gap-2 text-sm text-slate-400 mb-6 flex-wrap">
+                    <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+                    <ChevronRight className="w-4 h-4" />
+                    <Link href="/dashboard/subjects" className="hover:text-white transition-colors">Subjects</Link>
+                    <ChevronRight className="w-4 h-4" />
+                    <span className="text-white">{subject.name}</span>
+                </div>
 
                 <div className="flex items-center gap-5">
                     <div
