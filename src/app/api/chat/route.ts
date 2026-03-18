@@ -1,7 +1,5 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy_key_for_build');
+import { geminiModel, safeGeminiCall } from '@/lib/gemini';
 
 export const runtime = 'edge';
 
@@ -17,20 +15,6 @@ export async function POST(req: Request) {
             });
         }
 
-        const systemPrompt = `You are an elite, highly empathetic private tutor for Sri Lankan A/L students on the ICONIC ACADEMY platform.
-Your objective is to guide the student to deep understanding, NOT just giving them the answer.
-Current student context: ${context ? `They are currently studying: ${context}` : 'General study query'}.
-Student level: ${level || 'Intermediate'}.
-
-CORE EDUCATIONAL PRINCIPLES (STRICTLY ENFORCED):
-1. **The Socratic Method**: Never give away the final answer immediately. Ask guiding questions to lead the student to the realization themselves.
-2. **Step-by-Step Breakdown**: If explaining a complex concept or solving a physics/math problem, break it down into explicit, numbered steps. Pause and ask if they understand step 1 before moving to step 2.
-3. **Analogy-First Approach**: Always introduce complex topics using intuitive, real-world analogies (e.g., explaining electrical resistance using water pipes).
-4. **Identify Knowledge Gaps**: If a student gets an answer wrong, don't just correct them. Ask a diagnostic question to figure out *why* they got it wrong, then address that core misunderstanding.
-5. **Tone & Formatting**: Be encouraging and patient. Always use proper Markdown styling. Use bold text for key terms. Format math equations clearly.
-
-If asked to "solve this", respond by asking them what the first step should be, or identifying the known variables first.`;
-
         // Map openai role format to Gemini's user/model format
         const geminiHistory = messages.slice(0, -1).map((m: any) => ({
             role: m.role === 'user' ? 'user' : 'model',
@@ -39,21 +23,30 @@ If asked to "solve this", respond by asking them what the first step should be, 
 
         const lastMessage = messages[messages.length - 1];
 
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            systemInstruction: systemPrompt
-        });
+        // Ensure we supply the dynamic context as part of the initial generation config,
+        // or just append it safely to the chat logic.
+        // Wait, the Master Prompt says:
+        // CURRENT CONTEXT: Subject: {subject}, Unit: {unit}, Lesson: {lesson}, Mastery: {mastery}, Tier: {tier}
+        // I will dynamically inject this context into the last message or as a system instruction override if supported,
+        // but since systemInstruction is built into `geminiModel`, I will prepend context to the first user message invisibly.
 
-        const chat = model.startChat({
+        const contextString = `\n\n[SYSTEM CONTEXT INJECTION - DO NOT REPLY TO THIS PART, JUST USE IT FOR CONTEXT: Student is currently studying: ${context || 'General topic'} at level ${level || 'Intermediate'}]`;
+        const finalMessage = lastMessage.content + contextString;
+
+        // Start chat with history
+        const chat = geminiModel.startChat({
             history: geminiHistory,
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 800,
+                maxOutputTokens: 1500, // Master prompt says 1500
             }
         });
 
-        const result = await chat.sendMessage(lastMessage.content);
-        const responseText = result.response.text();
+        // Use the safe wrapper to handle 429 scaling/limits
+        const responseText = await safeGeminiCall(async () => {
+            const result = await chat.sendMessage(finalMessage);
+            return result.response.text();
+        });
 
         return NextResponse.json({
             role: 'assistant',
