@@ -29,7 +29,7 @@ const NAV_ITEMS = [
     { name: 'Past Papers', href: '/dashboard/past-papers', icon: Target },
     { name: 'AI Tutor', href: '/dashboard/ai-tutor', icon: BrainCircuit },
     { name: 'Achievements', href: '/dashboard/achievements', icon: Trophy },
-    { name: 'Progress', href: '/dashboard/analytics', icon: BarChart3 },
+    { name: 'Progress', href: '/dashboard/progress', icon: BarChart3 },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 

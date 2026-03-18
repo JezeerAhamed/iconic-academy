@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { Subject } from '@/lib/types';
 import { savePracticeAttempt } from '@/lib/progress';
 import { getUnitProgress } from '@/lib/progress';
+import { db } from '@/lib/firebase';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -12,6 +13,7 @@ import { ChevronRight, Clock, Sparkles, PlayCircle, BookOpen, AlertCircle } from
 import Link from 'next/link';
 import { PracticeQuiz, Question } from '@/components/ui/PracticeQuiz';
 import { MasteryBadge } from '@/components/ui/MasteryBadge';
+import { doc, updateDoc } from 'firebase/firestore';
 
 export default function LessonClientViewer({
     lesson,
@@ -38,6 +40,24 @@ export default function LessonClientViewer({
             }).catch(console.error);
         }
     }, [user, unit.id, lesson.id]);
+
+    useEffect(() => {
+        if (!user) return;
+
+        updateDoc(doc(db, 'users', user.uid), {
+            lastVisitedLesson: {
+                subjectId: subject.id,
+                unitId: unit.id,
+                unitTitle: unit.title,
+                lessonId: lesson.id,
+                lessonTitle: lesson.title,
+                href: `/dashboard/subjects/${subject.id}/${unit.id}/${lesson.id}`,
+                visitedAt: new Date().toISOString(),
+            },
+        }).catch((error) => {
+            console.error('Failed to store last visited lesson:', error);
+        });
+    }, [lesson.id, lesson.title, subject.id, unit.id, unit.title, user]);
 
     useEffect(() => {
         const fetchSummary = async () => {

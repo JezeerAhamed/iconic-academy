@@ -12,6 +12,7 @@ const LABEL_MAP: Record<string, string> = {
     'ai-tutor': 'AI Tutor',
     achievements: 'Achievements',
     analytics: 'Progress',
+    progress: 'Progress',
     planner: 'Planner',
     pricing: 'Pricing',
     settings: 'Settings',

@@ -1,420 +1,477 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { SUBJECTS, SYLLABUS } from '@/lib/constants';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { Progress, Subject } from '@/lib/types';
+import Link from 'next/link';
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  Flame,
+  PlayCircle,
+  Sparkles,
+  SunMedium,
+} from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, Zap, BookOpen, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { getLevelProgress } from '@/lib/gamification';
-import toast from 'react-hot-toast';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { ProgressStatus } from '@/lib/types';
+import { SubjectAnalytics } from '@/lib/dashboard-intelligence';
+import { useDashboardAnalytics } from '@/lib/use-dashboard-analytics';
+
+const STATUS_LABELS: Record<ProgressStatus, string> = {
+  not_started: 'Not started',
+  practicing: 'Practicing',
+  proficient: 'Proficient',
+  mastered: 'Mastered',
+};
+
+const STATUS_COLORS: Record<ProgressStatus, string> = {
+  not_started: 'text-slate-500',
+  practicing: 'text-sky-400',
+  proficient: 'text-amber-400',
+  mastered: 'text-emerald-400',
+};
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="border-white/10 bg-[#0b101a] p-6">
+        <div className="h-7 w-48 animate-pulse rounded bg-white/10" />
+        <div className="mt-3 h-4 w-64 animate-pulse rounded bg-white/5" />
+        <div className="mt-8 grid gap-6 lg:grid-cols-[220px_1fr]">
+          <div className="h-44 animate-pulse rounded-2xl bg-white/5" />
+          <div className="space-y-3">
+            <div className="h-5 w-40 animate-pulse rounded bg-white/10" />
+            <div className="h-4 w-32 animate-pulse rounded bg-white/5" />
+            <div className="h-4 w-56 animate-pulse rounded bg-white/5" />
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Card key={index} className="h-64 animate-pulse border-white/10 bg-[#0b101a]" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DailyGoalRing({ progress, todayXP, goalXP }: { progress: number; todayXP: number; goalXP: number }) {
+  const safeProgress = Math.min(1, Math.max(0, progress));
+  const radius = 58;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - safeProgress);
+  const ringId = 'dashboard-goal-ring';
+
+  return (
+    <div className="relative flex h-40 w-40 items-center justify-center">
+      <svg className="-rotate-90 h-40 w-40" viewBox="0 0 140 140" aria-hidden="true">
+        <defs>
+          <linearGradient id={ringId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8b5cf6" />
+            <stop offset="100%" stopColor="#22c55e" />
+          </linearGradient>
+        </defs>
+        <circle cx="70" cy="70" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
+        <circle
+          cx="70"
+          cy="70"
+          r={radius}
+          fill="none"
+          stroke={safeProgress >= 1 ? '#22c55e' : `url(#${ringId})`}
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          className="transition-all duration-700"
+        />
+      </svg>
+
+      <div className="absolute flex flex-col items-center text-center">
+        <span className={`text-3xl font-black ${safeProgress >= 1 ? 'text-emerald-400' : 'text-white'}`}>
+          {Math.round(safeProgress * 100)}%
+        </span>
+        <span className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">Daily goal</span>
+        <span className="mt-1 text-sm font-medium text-slate-300">
+          {todayXP}/{goalXP} XP
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ProgressMap({ subject }: { subject: SubjectAnalytics }) {
+  return (
+    <div className="space-y-4 rounded-2xl border border-white/10 bg-[#0b101a] p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <span className="text-xl" aria-hidden="true">
+              {subject.icon}
+            </span>
+            <div>
+              <h3 className="text-lg font-semibold text-white">{subject.name}</h3>
+              <p className="text-sm text-slate-400">{subject.masteredUnitCount}/{subject.units.length} units mastered</p>
+            </div>
+          </div>
+        </div>
+
+        <span className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300 ring-1 ring-white/10">
+          {subject.unitCompletionPercentage}%
+        </span>
+      </div>
+
+      <div className="overflow-x-auto pb-2">
+        <div className="min-w-[360px]">
+          <div className="flex items-center gap-0.5">
+            {subject.units.map((unit, index) => (
+              <div key={unit.unitId} className="flex items-center">
+                <span
+                  className={[
+                    'inline-flex h-6 w-6 items-center justify-center',
+                    unit.status === 'mastered'
+                      ? 'text-emerald-400'
+                      : unit.status === 'proficient'
+                        ? 'text-amber-400'
+                        : unit.status === 'practicing'
+                          ? 'text-sky-400'
+                          : 'text-slate-600',
+                  ].join(' ')}
+                  title={unit.unitTitle}
+                >
+                  {unit.status === 'mastered' ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : unit.status === 'proficient' ? (
+                    <Circle className="h-5 w-5 fill-current" strokeWidth={1.5} />
+                  ) : unit.status === 'practicing' ? (
+                    <PlayCircle className="h-5 w-5" />
+                  ) : (
+                    <Circle className="h-5 w-5" strokeWidth={1.5} />
+                  )}
+                </span>
+                {index < subject.units.length - 1 ? <div className="h-px w-4 bg-white/15" /> : null}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-2 flex items-center gap-0.5 text-[11px] font-medium text-slate-500">
+            {subject.units.map((unit, index) => (
+              <div key={`${unit.unitId}-label`} className="flex items-center">
+                <span className="inline-flex w-6 justify-center">{index + 1}</span>
+                {index < subject.units.length - 1 ? <div className="w-4" /> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 text-sm">
+        <p className="text-slate-400">
+          {subject.masteredUnitCount}/{subject.units.length} units mastered - {subject.unitCompletionPercentage}%
+        </p>
+        <Link href={subject.continueHref} className="text-sm font-semibold text-violet-300 hover:text-violet-200">
+          Continue {subject.name} <ArrowRight className="ml-1 inline h-4 w-4" />
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardOverview() {
-    const { user, profile } = useAuth();
+  const { profile } = useAuth();
+  const { analytics, loading } = useDashboardAnalytics(profile);
 
-    // Data states
-    const [progressStats, setProgressStats] = useState({
-        totalLessons: 0,
-        averageAccuracy: 0,
-        subjectProgress: {} as Record<string, number>,
-        lastSubjectId: ''
-    });
-    const [dailyGoalXP, setDailyGoalXP] = useState(100);
-    const [savingGoal, setSavingGoal] = useState(false);
-    const [loading, setLoading] = useState(true);
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
-    useEffect(() => {
-        async function fetchDashboardData() {
-            if (!profile?.uid) return;
-
-            try {
-                // Fetch student progress
-                const progressQ = query(collection(db, 'studentProgress'), where('userId', '==', profile.uid));
-                const progressSnap = await getDocs(progressQ);
-
-                let totalCompleted = 0;
-                let totalAccuracy = 0;
-                let accuracyCount = 0;
-                const pMap: Record<string, number> = {};
-                let latestDate = 0;
-                let lastSubject = '';
-
-                progressSnap.docs.forEach(doc => {
-                    const data = doc.data() as Progress;
-                    const isCompleted = data.status === 'mastered' || (data.status as any) === 'completed';
-
-                    if (isCompleted) {
-                        totalCompleted++;
-                        pMap[data.subjectId] = (pMap[data.subjectId] || 0) + 1;
-                    }
-
-                    if (data.accuracy !== undefined) {
-                        totalAccuracy += data.accuracy;
-                        accuracyCount++;
-                    }
-
-                    const attemptTime = new Date(data.lastAttemptAt || 0).getTime();
-                    if (attemptTime > latestDate) {
-                        latestDate = attemptTime;
-                        lastSubject = data.subjectId;
-                    }
-                });
-
-                setProgressStats({
-                    totalLessons: totalCompleted,
-                    averageAccuracy: accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0,
-                    subjectProgress: pMap,
-                    lastSubjectId: lastSubject
-                });
-
-            } catch (error) {
-                console.error("Error fetching dashboard data:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchDashboardData();
-    }, [profile?.uid]);
-
-    // Fetch current daily goal from gamification doc on load
-    useEffect(() => {
-        async function fetchGoal() {
-            if (!user?.uid) return;
-            const gamSnap = await getDoc(doc(db, 'gamification', user.uid));
-            if (gamSnap.exists()) {
-                setDailyGoalXP(gamSnap.data().dailyGoalXP ?? 100);
-            }
-        }
-        fetchGoal();
-    }, [user?.uid]);
-
-    const handleSetGoal = async (xp: number) => {
-        if (!user?.uid) return;
-        setSavingGoal(true);
-        try {
-            await updateDoc(doc(db, 'gamification', user.uid), { dailyGoalXP: xp });
-            setDailyGoalXP(xp);
-            toast.success(`Daily goal set to ${xp} XP! 🎯`);
-        } catch {
-            toast.error('Could not save goal. Please retry.');
-        } finally {
-            setSavingGoal(false);
-        }
-    };
-
-    // Process Gamification Data
-    const progressData = getLevelProgress(profile?.xp || 0, profile?.level || 'Beginner');
-
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-
-    const userSubjects = SUBJECTS.filter(s => (profile?.enrolledSubjects ?? []).includes(s.id));
-    const continueLink = progressStats.lastSubjectId
-        ? `/dashboard/subjects/${progressStats.lastSubjectId}`
-        : userSubjects.length > 0 ? `/dashboard/subjects/${userSubjects[0].id}` : `/dashboard/subjects`;
-
-    // Find the first lesson of the first enrolled subject for empty-state CTA
-    const firstSubject = userSubjects[0];
-    const firstSubjectUnits = firstSubject ? (SYLLABUS as any)[firstSubject.id] ?? [] : [];
-    const firstUnit = firstSubjectUnits[0];
-    const firstLesson = firstUnit?.lessons?.[0];
-    const firstLessonLink = firstSubject && firstUnit && firstLesson
-        ? `/dashboard/subjects/${firstSubject.id}/${firstUnit.id}/${firstLesson.id}`
-        : `/dashboard/subjects`;
-
-    const isNewUser = !loading && progressStats.totalLessons === 0;
-
+  if (!analytics) {
     return (
-        <div className="space-y-8 pb-12">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-                        {greeting}, <span className="text-indigo-400">{profile?.displayName?.split(' ')[0] || 'Student'}</span>! 👋
-                    </h1>
-                    <p className="text-slate-400">Ready to crush your A/L {profile?.examYear} goals today?</p>
-                </div>
-            </div>
-
-            {/* Gamification Dashboard Widget */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                {/* Main Progress Card */}
-                <Card className="p-6 col-span-1 lg:col-span-2 bg-[#0b101a] border-white/10 relative overflow-hidden flex flex-col justify-center">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/4" />
-                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-
-                        {/* Level Shield */}
-                        <div className="relative flex shrink-0 items-center justify-center w-36 h-36">
-                            <div className="absolute inset-0 bg-indigo-500/10 rounded-full animate-pulse" />
-                            <div className="w-28 h-28 rounded-full bg-[#1a1f2e] border border-indigo-500/50 flex flex-col items-center justify-center z-10 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
-                                <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-0.5">Level</span>
-                                <span className="text-4xl font-black text-white">{Math.floor((profile?.xp || 0) / 1000) + 1}</span>
-                            </div>
-                            {/* Circular Progress Ring */}
-                            <svg className="absolute inset-0 w-full h-full -rotate-90">
-                                <circle cx="72" cy="72" r="66" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-                                <circle cx="72" cy="72" r="66" fill="none" stroke="currentColor" strokeWidth="6"
-                                    className="text-indigo-500 transition-all duration-1000 ease-out"
-                                    strokeDasharray="414"
-                                    strokeDashoffset={414 - (414 * progressData.percentage) / 100}
-                                    strokeLinecap="round"
-                                />
-                            </svg>
-                        </div>
-
-                        {/* XP Details */}
-                        <div className="flex-1 text-center md:text-left">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-3">
-                                <Trophy className="w-3.5 h-3.5" /> {profile?.level || 'Beginner'} Rank
-                            </div>
-                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-                                Level up your knowledge! 🚀
-                            </h3>
-                            <p className="text-slate-400 mb-6 text-sm max-w-md">
-                                You are <strong className="text-white">{progressData.requiredXP - progressData.currentXPInLevel} XP</strong> away from reaching the next rank. Keep crushing those lessons!
-                            </p>
-
-                            {/* Quick Stats Grid */}
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-8">
-                                <div className="text-center md:text-left">
-                                    <p className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-widest">Total XP</p>
-                                    <p className="text-xl font-bold text-indigo-400">{profile?.xp || 0}</p>
-                                </div>
-                                <div className="w-px h-8 bg-white/10 hidden sm:block" />
-                                <div className="text-center md:text-left">
-                                    <p className="text-[10px] text-slate-500 mb-1 uppercase font-bold tracking-widest">Lessons</p>
-                                    <p className="text-xl font-bold text-white">{loading ? '...' : progressStats.totalLessons}</p>
-                                </div>
-                                <div className="w-px h-8 bg-white/10 hidden sm:block" />
-                                <div className="text-center md:text-left">
-                                    <p className="text-[10px] text-emerald-500/70 mb-1 uppercase font-bold tracking-widest">Accuracy</p>
-                                    <p className="text-xl font-bold text-emerald-400">{loading ? '...' : `${progressStats.averageAccuracy}%`}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </Card>
-
-                {/* Streak Card */}
-                <Card className="p-6 bg-gradient-to-br from-orange-500/10 to-[#0b101a] border-orange-500/20 flex flex-col items-center justify-center text-center relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.03] pointer-events-none" />
-                    <div className="w-20 h-20 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-orange-500/20 transition-all shadow-[0_0_30px_rgba(249,115,22,0.15)]">
-                        <Flame className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-5xl font-black text-white mb-1 shadow-orange-500/50 drop-shadow-md">{profile?.streak || 0}</h3>
-                    <p className="text-orange-300/80 font-bold tracking-widest uppercase text-sm mb-4">Day Streak</p>
-                    <p className="text-xs text-slate-400 max-w-[200px]">Complete a lesson or practice today to keep your fire lit! 🔥</p>
-                </Card>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link href="/dashboard/ai-tutor">
-                    <Card className="p-6 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 hover:from-indigo-500/20 hover:to-purple-600/20 border-indigo-500/20 transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                                <BrainCircuit className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-white font-semibold">AI Tutor</h3>
-                                <p className="text-sm text-slate-400">Ask a question</p>
-                            </div>
-                        </div>
-                    </Card>
-                </Link>
-                <Link href="/dashboard/past-papers">
-                    <Card className="p-6 bg-gradient-to-br from-emerald-500/10 to-teal-600/10 hover:from-emerald-500/20 hover:to-teal-600/20 border-emerald-500/20 transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                                <Target className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-white font-semibold">Past Papers</h3>
-                                <p className="text-sm text-slate-400">Practice now</p>
-                            </div>
-                        </div>
-                    </Card>
-                </Link>
-                <Link href={continueLink}>
-                    <Card className="p-6 bg-gradient-to-br from-blue-500/10 to-indigo-600/10 hover:from-blue-500/20 hover:to-indigo-600/20 border-blue-500/20 transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                                <Zap className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-white font-semibold">Continue</h3>
-                                <p className="text-sm text-slate-400">Resume learning</p>
-                            </div>
-                        </div>
-                    </Card>
-                </Link>
-            </div>
-
-            {/* Your Subjects */}
-            <div>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Your Subjects</h2>
-                    <Link href="/dashboard/subjects" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
-                        View all <ArrowRight className="w-4 h-4" />
-                    </Link>
-                </div>
-
-                {/* ── EMPTY STATE: new users ── */}
-                {isNewUser ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* First Lesson CTA */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            <Card className="p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-500/20 relative overflow-hidden h-full flex flex-col justify-between">
-                                <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-                                <div className="relative z-10">
-                                    <div className="text-4xl mb-4">🎯</div>
-                                    <h3 className="text-xl font-bold text-white mb-2">
-                                        Ready to start your A/L journey?
-                                    </h3>
-                                    <p className="text-slate-400 text-sm mb-6">
-                                        Your first lesson{firstSubject ? ` in ${firstSubject.name}` : ''} is waiting.
-                                        It only takes 15 minutes.
-                                    </p>
-                                    <Link href={firstLessonLink}>
-                                        <Button className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold flex items-center gap-2 group">
-                                            Start My First Lesson
-                                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </Card>
-                        </motion.div>
-
-                        {/* Daily Goal Setup */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <Card className="p-8 bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-amber-500/20 h-full flex flex-col justify-between">
-                                <div>
-                                    <div className="text-4xl mb-4">🏆</div>
-                                    <h3 className="text-xl font-bold text-white mb-1">
-                                        Set your daily study goal
-                                    </h3>
-                                    <p className="text-slate-400 text-xs mb-6">
-                                        Most A-grade students earn 100 XP/day
-                                    </p>
-
-                                    <div className="grid grid-cols-2 gap-3 mb-4">
-                                        {[50, 100, 150, 200].map((xp) => (
-                                            <button
-                                                key={xp}
-                                                onClick={() => handleSetGoal(xp)}
-                                                disabled={savingGoal}
-                                                className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${dailyGoalXP === xp
-                                                        ? 'border-amber-400 bg-amber-400/10 text-amber-300'
-                                                        : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
-                                                    }`}
-                                            >
-                                                <span>{xp} XP</span>
-                                                {dailyGoalXP === xp && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-slate-500">
-                                        You can change this anytime from your profile.
-                                    </p>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    </div>
-
-                ) : (
-                    /* ── NORMAL STATE: subjects with progress ── */
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {!loading && userSubjects.map((subject, i) => {
-                            const completed = progressStats.subjectProgress[subject.id] || 0;
-                            const total = subject.lessonCount || 1;
-                            const percentage = Math.round((completed / total) * 100);
-
-                            return (
-                                <motion.div
-                                    key={subject.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.1 }}
-                                >
-                                    <Link href={`/dashboard/subjects/${subject.id}`} className="block group">
-                                        <Card className="p-6 bg-black/20 border-white/5 hover:border-white/20 transition-all relative overflow-hidden h-full">
-                                            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2" style={{ background: subject.color }} />
-
-                                            <div className="flex items-start justify-between mb-8">
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                                                        style={{ background: `${subject.color}15`, color: subject.color }}
-                                                    >
-                                                        {subject.icon}
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-lg font-bold text-white">{subject.name}</h3>
-                                                        <p className="text-xs text-slate-500">{subject.unitCount} Units Total</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-2xl font-bold" style={{ color: subject.color }}>{percentage}%</span>
-                                                    <p className="text-xs text-slate-500">Completed</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <div className="flex justify-between text-xs mb-1.5">
-                                                        <span className="text-slate-400">Overall Progress</span>
-                                                        <span className="text-white font-medium">{completed} / {total}</span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${percentage}%`, background: subject.color }} />
-                                                    </div>
-                                                </div>
-
-                                                <div className="pt-4 border-t border-white/5">
-                                                    <p className="text-xs text-slate-500 flex items-center gap-1.5 mb-2">
-                                                        <Clock className="w-3.5 h-3.5" /> Jump back in
-                                                    </p>
-                                                    <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
-                                                        Continue {subject.name} journey
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    </Link>
-                                </motion.div>
-                            );
-                        })}
-
-                        {(!loading && userSubjects.length === 0) && (
-                            <div className="col-span-full p-8 text-center border border-dashed border-white/10 rounded-2xl bg-white/5">
-                                <BookOpen className="w-8 h-8 text-slate-500 mx-auto mb-3" />
-                                <h3 className="text-white font-medium mb-1">No subjects selected</h3>
-                                <p className="text-slate-400 text-sm mb-4">Go back to onboarding to select your subjects.</p>
-                                <Link href="/onboarding">
-                                    <Button variant="outline" className="border-indigo-500 text-indigo-400 hover:bg-indigo-500/10">
-                                        Select Subjects
-                                    </Button>
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
+      <Card className="border-white/10 bg-[#0b101a] p-6 text-slate-300">
+        Dashboard data is not available yet. Start a lesson to populate your progress insights.
+      </Card>
     );
+  }
+
+  const goalRemaining = Math.max(0, analytics.dailyGoalXP - analytics.todayXP);
+  const weeklyMaxXp = Math.max(...analytics.weeklyActivity.map((day) => day.xp), 0);
+  const continueLessonTitle = analytics.continueLesson?.lessonTitle ?? 'Start your first lesson';
+  const continueSubject = analytics.continueLesson?.subjectName ?? 'Your syllabus';
+  const continueUnit = analytics.continueLesson?.unitTitle ?? 'First unit';
+
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="overflow-hidden border-white/10 bg-[#0b101a] p-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-80 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.18),transparent_60%)]" />
+        <div className="relative space-y-6">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
+                <SunMedium className="h-3.5 w-3.5" />
+                {analytics.greeting}
+              </span>
+            </div>
+            <h1 className="text-3xl font-black tracking-tight text-white">
+              {analytics.greeting}, {analytics.displayName}
+            </h1>
+            <p className="text-sm text-slate-400">
+              {analytics.examCountdownLabel} - {analytics.daysToExam} days to go
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+            <div className="flex items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+              <DailyGoalRing progress={analytics.dailyGoalProgress} todayXP={analytics.todayXP} goalXP={analytics.dailyGoalXP} />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Today</p>
+                <p className="mt-3 text-3xl font-black text-white">
+                  {analytics.todayXP}
+                  <span className="ml-2 text-base font-medium text-slate-400">/ {analytics.dailyGoalXP} XP</span>
+                </p>
+                <p className="mt-3 text-sm text-slate-300">
+                  {goalRemaining > 0
+                    ? `Keep going. ${goalRemaining} more XP hits your goal.`
+                    : 'Goal complete. Any extra XP today is pure bonus.'}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Momentum</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-300">
+                    <Flame className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-3xl font-black text-white">{analytics.currentStreak}</p>
+                    <p className="text-sm text-slate-400">day streak</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-slate-300">
+                  Personal best: {analytics.personalBestStreak} days. A quick lesson keeps the streak alive.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card className="border-white/10 bg-[#0b101a] p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
+              <BookOpen className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Continue where you left off</h2>
+              <p className="text-sm text-slate-400">
+                {analytics.hasLastVisitedLesson ? 'Your latest lesson is ready to resume.' : 'Pick a lesson and get moving.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <p className="text-sm font-medium text-slate-400">
+              {continueSubject} - {continueUnit}
+            </p>
+            <h3 className="text-2xl font-bold text-white">{continueLessonTitle}</h3>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className={`font-semibold ${STATUS_COLORS[analytics.continueLessonStatus]}`}>
+                {STATUS_LABELS[analytics.continueLessonStatus]}
+              </span>
+              <span className="text-slate-500">/</span>
+              <span className="text-slate-400">{analytics.continueLessonRemainingMinutes} min remaining</span>
+              {analytics.continueLessonAccuracy !== null ? (
+                <>
+                  <span className="text-slate-500">/</span>
+                  <span className="text-slate-400">{analytics.continueLessonAccuracy}% accuracy</span>
+                </>
+              ) : null}
+            </div>
+
+            <Link href={analytics.continueLesson?.href ?? '/dashboard/subjects'}>
+              <Button className="mt-3 w-full bg-violet-600 text-white hover:bg-violet-500 md:w-auto">
+                {analytics.hasLastVisitedLesson ? 'Continue Lesson' : 'Start your first lesson'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        <Card className="border-white/10 bg-[#0b101a] p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Recommended for you</h2>
+              <p className="text-sm text-slate-400">Based on lessons still in practice or waiting to be started.</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <p className="mb-4 text-sm text-slate-300">
+              {analytics.recommendedLessons.length > 0
+                ? 'Focus on these next to strengthen your weaker or untouched areas.'
+                : 'You have covered every generated lesson in your enrolled subjects. Keep revising and polishing mastery.'}
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              {analytics.recommendedLessons.map((lesson) => (
+                <Link
+                  key={lesson.lessonId}
+                  href={lesson.href}
+                  className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-400/15"
+                >
+                  {lesson.lessonTitle}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="border-white/10 bg-[#0b101a] p-6">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Subject progress map</h2>
+            <p className="text-sm text-slate-400">A quick mastery read across every enrolled subject.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          {analytics.subjectAnalytics.map((subject) => (
+            <ProgressMap key={subject.subjectId} subject={subject} />
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
+        <Card className="border-white/10 bg-[#0b101a] p-6">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Weekly activity</h2>
+              <p className="text-sm text-slate-400">XP earned from lesson activity over the last 7 days.</p>
+            </div>
+            <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+              {analytics.weeklyActivity.reduce((sum, day) => sum + day.xp, 0)} XP
+            </span>
+          </div>
+
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.weeklyActivity} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.08)" />
+                <XAxis
+                  dataKey="shortLabel"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  contentStyle={{
+                    background: '#0f172a',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '16px',
+                    color: '#e2e8f0',
+                  }}
+                  formatter={(value: number) => [`${value} XP`, 'Earned']}
+                />
+                <Bar dataKey="xp" radius={[10, 10, 0, 0]}>
+                  {analytics.weeklyActivity.map((day) => (
+                    <Cell
+                      key={day.key}
+                      fill={
+                        day.xp === 0
+                          ? 'rgba(148,163,184,0.25)'
+                          : day.isToday
+                            ? '#22c55e'
+                            : day.xp === weeklyMaxXp
+                              ? '#8b5cf6'
+                              : '#6366f1'
+                      }
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="border-white/10 bg-[#0b101a] p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-300">
+              <CalendarDays className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Your A/L {analytics.examYear} timeline</h2>
+              <p className="text-sm text-slate-400">Countdown, syllabus pace, and the next important milestones.</p>
+            </div>
+          </div>
+
+          <div className="space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <div>
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-slate-400">Syllabus completion</span>
+                <span className="font-semibold text-white">{analytics.syllabusCompletionPercent}%</span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-400"
+                  style={{ width: `${analytics.syllabusCompletionPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {analytics.timelineMilestones.map((milestone) => (
+                <div key={milestone.label} className="flex items-center gap-3 text-sm">
+                  <span
+                    className={[
+                      'inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                      milestone.status === 'complete'
+                        ? 'bg-emerald-500/15 text-emerald-300'
+                        : milestone.status === 'in_progress'
+                          ? 'bg-amber-500/15 text-amber-300'
+                          : 'bg-white/10 text-slate-400',
+                    ].join(' ')}
+                  >
+                    {milestone.status === 'complete' ? 'OK' : milestone.status === 'in_progress' ? 'IP' : 'NS'}
+                  </span>
+                  <span className="text-slate-200">{milestone.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
+              {analytics.projectedFinishLabel ? (
+                <p>
+                  At your current pace, you are on track to finish the syllabus by{' '}
+                  <span className="font-semibold text-white">{analytics.projectedFinishLabel}</span>.
+                </p>
+              ) : (
+                <p>Complete a few lessons this week and we will project your syllabus finish month here.</p>
+              )}
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 }

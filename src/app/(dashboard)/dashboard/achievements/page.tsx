@@ -1,181 +1,461 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  Award,
+  BadgeCheck,
+  BookOpen,
+  BrainCircuit,
+  CheckCircle2,
+  Circle,
+  Crown,
+  Flame,
+  Medal,
+  Rocket,
+  Shield,
+  Sparkles,
+  Star,
+  Target,
+  Trophy,
+  Users,
+  Zap,
+} from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Trophy, Flame, Target, Zap, Star, Shield, Award, Crown, BookOpen, Clock, Users, ArrowUpCircle, Lock } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { getLevelProgress } from '@/lib/gamification';
-import { UserLevel } from '@/lib/types';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import {
+  ACHIEVEMENT_LEVELS,
+  DashboardAnalyticsSnapshot,
+  StudyCalendarDay,
+  formatShortDate,
+} from '@/lib/dashboard-intelligence';
+import { useDashboardAnalytics } from '@/lib/use-dashboard-analytics';
 
-// Complete Badge List
-const BADGE_DEFINITIONS = [
-    { id: 'first_lesson', title: 'First Steps', description: 'Complete your first A/L syllabus lesson.', icon: Target, color: 'text-indigo-400', bg: 'bg-indigo-500/20' },
-    { id: 'week_warrior', title: 'Week Warrior', description: 'Maintain a 7-day learning streak.', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-500/20' },
-    { id: 'sharpshooter', title: 'Sharpshooter', description: 'Achieve 100% accuracy in a practice session.', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
-    { id: 'speed_demon', title: 'Speed Demon', description: 'Complete a lesson 2x faster than average.', icon: Clock, color: 'text-red-400', bg: 'bg-red-500/20' },
-    { id: 'perfect_paper', title: 'Perfect Paper', description: 'Score 100% on a past paper.', icon: Award, color: 'text-emerald-400', bg: 'bg-emerald-500/20' },
-    { id: 'einstein', title: 'Einstein', description: 'Master all Physics units.', icon: Star, color: 'text-blue-400', bg: 'bg-blue-500/20' },
-    { id: 'organic_master', title: 'Organic Master', description: 'Master all Organic Chemistry units.', icon: Shield, color: 'text-teal-400', bg: 'bg-teal-500/20' },
-    { id: 'island_ranker', title: 'Island Ranker', description: 'Reach the Ranker level.', icon: Crown, color: 'text-purple-400', bg: 'bg-purple-500/20' },
-    { id: 'helpful_peer', title: 'Helpful Peer', description: 'Answer 10 questions in the community.', icon: Users, color: 'text-pink-400', bg: 'bg-pink-500/20' },
-    { id: 'bilingual_scholar', title: 'Bilingual Scholar', description: 'Attempt questions in both Sinhala & English.', icon: BookOpen, color: 'text-cyan-400', bg: 'bg-cyan-500/20' },
-    { id: 'comeback_kid', title: 'Comeback Kid', description: 'Recover a lost streak.', icon: ArrowUpCircle, color: 'text-lime-400', bg: 'bg-lime-500/20' },
-];
+interface BadgeCardData {
+  id: string;
+  title: string;
+  description: string;
+  requirement: string;
+  unlocked: boolean;
+  unlockedAt?: Date | null;
+  progressPercent?: number;
+  progressLabel?: string;
+  icon: typeof Target;
+  accent: string;
+}
+
+function CalendarCell({ day }: { day: StudyCalendarDay }) {
+  const colors = [
+    'bg-slate-800',
+    'bg-violet-900/70',
+    'bg-violet-700/80',
+    'bg-violet-500/85',
+    'bg-violet-400',
+  ];
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div
+        className={[
+          'h-8 w-8 rounded-md border',
+          day.didStudy ? colors[day.intensity] : colors[0],
+          day.isToday ? 'border-white ring-1 ring-violet-400/70' : 'border-white/5',
+        ].join(' ')}
+      />
+      <span className="text-[10px] text-slate-500">{day.dayOfMonth}</span>
+    </div>
+  );
+}
+
+function buildBadgeData(analytics: DashboardAnalyticsSnapshot): BadgeCardData[] {
+  const today = new Date();
+  const weekWarriorDate = analytics.currentStreak >= 7 || analytics.personalBestStreak >= 7 ? today : null;
+  const speedDemonUnlocked = analytics.highestDailyCompletedLessons >= 3;
+
+  return [
+    {
+      id: 'first_steps',
+      title: 'First Steps',
+      description: 'Complete your first lesson.',
+      requirement: 'Complete 1 lesson to unlock',
+      unlocked: analytics.lessonsCompleted >= 1,
+      unlockedAt: analytics.firstLessonUnlockedAt,
+      icon: Star,
+      accent: 'text-violet-300',
+    },
+    {
+      id: 'week_warrior',
+      title: 'Week Warrior',
+      description: 'Study 7 days in a row.',
+      requirement: 'Study 7 days in a row',
+      unlocked: analytics.currentStreak >= 7 || analytics.personalBestStreak >= 7,
+      unlockedAt: weekWarriorDate,
+      icon: Flame,
+      accent: 'text-orange-300',
+    },
+    {
+      id: 'sharpshooter',
+      title: 'Sharpshooter',
+      description: 'Get all questions right in one session.',
+      requirement: 'Get all questions right',
+      unlocked: Boolean(analytics.firstPerfectAccuracyAt),
+      unlockedAt: analytics.firstPerfectAccuracyAt,
+      icon: Target,
+      accent: 'text-amber-300',
+    },
+    {
+      id: 'speed_demon',
+      title: 'Speed Demon',
+      description: 'Complete 3 lessons in one day.',
+      requirement: 'Complete 3 lessons in a day',
+      unlocked: speedDemonUnlocked,
+      unlockedAt: speedDemonUnlocked ? today : null,
+      progressPercent: Math.min(100, Math.round((analytics.highestDailyCompletedLessons / 3) * 100)),
+      progressLabel: `${analytics.highestDailyCompletedLessons}/3 lessons`,
+      icon: Zap,
+      accent: 'text-rose-300',
+    },
+    {
+      id: 'perfect_paper',
+      title: 'Perfect Paper',
+      description: 'Score 90%+ on a past paper.',
+      requirement: 'Score 90%+ on any past paper',
+      unlocked: false,
+      icon: Award,
+      accent: 'text-emerald-300',
+    },
+    {
+      id: 'einstein',
+      title: 'Einstein',
+      description: 'Complete all Physics units.',
+      requirement: 'Complete all Physics units',
+      unlocked: analytics.physicsCompletionPercent >= 100,
+      unlockedAt: analytics.physicsCompletionPercent >= 100 ? today : null,
+      progressPercent: analytics.physicsCompletionPercent,
+      progressLabel: `${analytics.physicsCompletionPercent}% complete`,
+      icon: BrainCircuit,
+      accent: 'text-sky-300',
+    },
+    {
+      id: 'organic_master',
+      title: 'Organic Master',
+      description: 'Reach 80%+ in Organic Chemistry.',
+      requirement: 'Score 80%+ in Organic Chemistry',
+      unlocked: analytics.chemistryOrganicProgressPercent >= 100,
+      unlockedAt: analytics.chemistryOrganicProgressPercent >= 100 ? today : null,
+      progressPercent: analytics.chemistryOrganicProgressPercent,
+      progressLabel: `${analytics.chemistryOrganicProgressPercent}% to target`,
+      icon: Shield,
+      accent: 'text-cyan-300',
+    },
+    {
+      id: 'island_ranker',
+      title: 'Island Ranker',
+      description: 'Reach Level 9.',
+      requirement: 'Reach Level 9',
+      unlocked: analytics.levelProgress.current.level >= 9,
+      unlockedAt: analytics.levelProgress.current.level >= 9 ? today : null,
+      progressPercent: analytics.islandRankerProgressPercent,
+      progressLabel: `${analytics.islandRankerProgressPercent}% to Level 9`,
+      icon: Crown,
+      accent: 'text-fuchsia-300',
+    },
+    {
+      id: 'helpful_peer',
+      title: 'Helpful Peer',
+      description: 'Answer a forum question.',
+      requirement: 'Help another student',
+      unlocked: false,
+      icon: Users,
+      accent: 'text-pink-300',
+    },
+    {
+      id: 'bilingual_scholar',
+      title: 'Bilingual Scholar',
+      description: 'Use Tamil mode for 7 days.',
+      requirement: 'Study in Tamil for a week',
+      unlocked: false,
+      icon: BookOpen,
+      accent: 'text-teal-300',
+    },
+    {
+      id: 'comeback_kid',
+      title: 'Comeback Kid',
+      description: 'Return after a 7-day break.',
+      requirement: 'Come back after missing a week',
+      unlocked: analytics.comebackKidUnlocked,
+      unlockedAt: analytics.comebackKidUnlocked ? today : null,
+      icon: Rocket,
+      accent: 'text-lime-300',
+    },
+  ];
+}
 
 export default function AchievementsPage() {
-    const { profile } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [gamification, setGamification] = useState({
-        xpTotal: 0,
-        level: 'Beginner' as UserLevel,
-        currentStreak: 0,
-        longestStreak: 0,
-        badges: [] as string[]
-    });
+  const { profile } = useAuth();
+  const { analytics, loading } = useDashboardAnalytics(profile);
 
-    useEffect(() => {
-        async function fetchGamification() {
-            if (!profile?.uid) return;
-            try {
-                const docRef = doc(db, 'gamification', profile.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setGamification({
-                        xpTotal: docSnap.data().xpTotal || 0,
-                        level: docSnap.data().level || 'Beginner',
-                        currentStreak: docSnap.data().currentStreak || 0,
-                        longestStreak: docSnap.data().longestStreak || 0,
-                        badges: docSnap.data().badges || []
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching gamification:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchGamification();
-    }, [profile?.uid]);
-
-    if (loading) {
-        return (
-            <div className="space-y-8 pb-12 max-w-6xl mx-auto">
-                <div>
-                    <div className="h-8 w-64 bg-white/10 rounded animate-pulse mb-3" />
-                    <div className="h-4 w-96 bg-white/5 rounded animate-pulse" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="h-48 md:col-span-2 bg-white/5 animate-pulse" />
-                    <Card className="h-48 bg-white/5 animate-pulse" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                    {[1, 2, 3, 4, 5, 6].map(i => <Card key={i} className="h-32 bg-white/5 animate-pulse" />)}
-                </div>
-            </div>
-        );
-    }
-
-    const { currentXPInLevel, requiredXP, percentage } = getLevelProgress(gamification.xpTotal, gamification.level);
-
+  if (loading) {
     return (
-        <div className="space-y-8 pb-12 max-w-6xl mx-auto">
-            <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight mb-2">My Achievements</h1>
-                <p className="text-slate-400">Track your level, streaks, and unlock exclusive badges.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Level Card */}
-                <Card className="p-6 md:col-span-2 bg-[#0b101a] border-white/5 relative overflow-hidden flex flex-col justify-center">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
-
-                    <div className="flex items-center gap-6 mb-6 relative z-10">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px] shadow-lg shadow-indigo-500/20">
-                            <div className="w-full h-full bg-[#0b101a] rounded-full flex flex-col items-center justify-center">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Lvl</span>
-                                <span className="text-3xl font-black text-white leading-none">
-                                    {gamification.level === 'Ranker' ? 'MAX' : Math.floor(gamification.xpTotal / 5000) + 1}
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-white">{gamification.level} Rank</h2>
-                            <p className="text-slate-400">{gamification.xpTotal.toLocaleString()} Total XP Earned</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2 relative z-10">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-300">Progress to Next Level</span>
-                            <span className="text-indigo-400 font-bold">{Math.round(currentXPInLevel).toLocaleString()} / {Math.round(requiredXP).toLocaleString()} XP</span>
-                        </div>
-                        <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${percentage}%` }}
-                            />
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Streak Card */}
-                <Card className="p-6 bg-[#0b101a] border-white/5 relative overflow-hidden flex flex-col items-center justify-center text-center">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full pointer-events-none" />
-                    <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center mb-4 border border-orange-500/30 relative z-10">
-                        <Flame className="w-8 h-8 text-orange-500" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-400 mb-1 relative z-10">Current Streak</p>
-                    <h2 className="text-4xl font-black text-white relative z-10">{gamification.currentStreak} Days</h2>
-                    <p className="text-xs text-orange-400 font-medium mt-2 relative z-10">Personal Best: {gamification.longestStreak} Days</p>
-                </Card>
-            </div>
-
-            <div>
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <Award className="w-5 h-5 text-yellow-400" /> Milestone Badges
-                </h2>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {BADGE_DEFINITIONS.map((badge, i) => {
-                        const isUnlocked = gamification.badges.includes(badge.id);
-                        return (
-                            <motion.div
-                                key={badge.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                            >
-                                <Card className={`p-6 border transition-all h-full relative overflow-hidden ${isUnlocked
-                                    ? 'bg-black/20 border-white/10 hover:border-white/20'
-                                    : 'bg-black/40 border-white/5 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'
-                                    }`}>
-                                    <div className="flex items-start gap-4 mb-2">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${badge.bg}`}>
-                                            <badge.icon className={`w-6 h-6 ${badge.color}`} />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-white flex items-center gap-2">
-                                                {badge.title}
-                                                {!isUnlocked && <Lock className="w-3.5 h-3.5 text-slate-500" />}
-                                            </h3>
-                                            <p className="text-sm text-slate-400 leading-relaxed mt-1">{badge.description}</p>
-                                        </div>
-                                    </div>
-
-                                    {isUnlocked && (
-                                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                                            <Trophy className="w-3.5 h-3.5" /> Unlocked
-                                        </div>
-                                    )}
-                                </Card>
-                            </motion.div>
-                        );
-                    })}
-                </div>
-            </div>
+      <div className="space-y-6 pb-12">
+        <Card className="h-72 animate-pulse border-white/10 bg-[#0b101a]" />
+        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <Card className="h-80 animate-pulse border-white/10 bg-[#0b101a]" />
+          <Card className="h-80 animate-pulse border-white/10 bg-[#0b101a]" />
         </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} className="h-56 animate-pulse border-white/10 bg-[#0b101a]" />
+          ))}
+        </div>
+      </div>
     );
+  }
+
+  if (!analytics) {
+    return (
+      <Card className="border-white/10 bg-[#0b101a] p-6 text-slate-300">
+        Achievements will appear after you complete some study activity.
+      </Card>
+    );
+  }
+
+  const badgeData = buildBadgeData(analytics);
+  const levelCurrent = analytics.levelProgress.current;
+  const levelNext = analytics.levelProgress.next;
+
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="overflow-hidden border-white/10 bg-[#0b101a] p-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-80 bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.2),transparent_60%)]" />
+        <div className="relative grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
+            <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+              <Trophy className="h-8 w-8" />
+            </span>
+            <p className="mt-4 text-sm uppercase tracking-[0.22em] text-slate-500">Current rank</p>
+            <h1 className="mt-2 text-5xl font-black text-white">Level {levelCurrent.level}</h1>
+            <p className="mt-2 text-lg font-semibold text-amber-300">{levelCurrent.rank}</p>
+
+            <div className="mt-6 w-full max-w-md">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-slate-400">{analytics.totalXp.toLocaleString()} XP</span>
+                <span className="font-semibold text-white">
+                  {levelNext ? `${analytics.totalXp.toLocaleString()}/${levelNext.threshold.toLocaleString()} XP` : 'Max level reached'}
+                </span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 via-violet-500 to-emerald-400"
+                  style={{ width: `${analytics.levelProgress.progressPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm text-slate-300">
+              {levelNext
+                ? `${analytics.levelProgress.remainingXp.toLocaleString()} XP until Level ${levelNext.level} - ${levelNext.rank}`
+                : 'You have reached the top of the ladder.'}
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <h2 className="text-xl font-semibold text-white">Level ladder</h2>
+            <p className="mt-2 text-sm text-slate-400">All 10 milestones on the path from first steps to legend status.</p>
+
+            <div className="mt-5 space-y-3">
+              {ACHIEVEMENT_LEVELS.map((level) => {
+                const isCurrent = level.level === levelCurrent.level;
+                const isPast = level.level < levelCurrent.level;
+                return (
+                  <div
+                    key={level.level}
+                    className={[
+                      'flex items-center justify-between rounded-2xl border p-4',
+                      isCurrent
+                        ? 'border-amber-400/30 bg-amber-400/10'
+                        : isPast
+                          ? 'border-emerald-500/20 bg-emerald-500/10'
+                          : 'border-white/10 bg-black/20',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={[
+                          'inline-flex h-9 w-9 items-center justify-center rounded-full',
+                          isCurrent
+                            ? 'bg-amber-400/20 text-amber-300'
+                            : isPast
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : 'bg-white/10 text-slate-500',
+                        ].join(' ')}
+                      >
+                        {isPast ? <CheckCircle2 className="h-5 w-5" /> : isCurrent ? <BadgeCheck className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
+                      </span>
+                      <div>
+                        <p className="font-semibold text-white">
+                          Level {level.level}: {level.rank}
+                        </p>
+                        <p className="text-sm text-slate-400">{level.threshold.toLocaleString()} XP</p>
+                      </div>
+                    </div>
+
+                    {isCurrent ? <span className="text-sm font-semibold text-amber-300">You are here</span> : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card className="border-white/10 bg-[#0b101a] p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-300">
+              <Flame className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-white">Streak</h2>
+              <p className="text-sm text-slate-400">Consistency compounds faster than cramming.</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex items-center justify-between text-sm text-slate-400">
+              <span>Current streak</span>
+              <span className="text-2xl font-black text-white">{analytics.currentStreak} days</span>
+            </div>
+            <div className="flex items-center justify-between text-sm text-slate-400">
+              <span>Personal best</span>
+              <span className="text-lg font-semibold text-orange-300">{analytics.personalBestStreak} days</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="border-white/10 bg-[#0b101a] p-6">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold text-white">30-day study calendar</h2>
+            <p className="text-sm text-slate-400">Darker squares mean more XP earned on that day.</p>
+          </div>
+
+          <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
+            {analytics.studyCalendar.map((day) => (
+              <CalendarCell key={day.key} day={day} />
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="border-white/10 bg-[#0b101a] p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
+            <Medal className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-xl font-semibold text-white">Badge grid</h2>
+            <p className="text-sm text-slate-400">Unlocked badges stay full color. Locked ones show the next requirement or progress.</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {badgeData.map((badge) => (
+            <div
+              key={badge.id}
+              className={[
+                'rounded-3xl border p-5 transition',
+                badge.unlocked
+                  ? 'border-white/10 bg-white/[0.03]'
+                  : 'border-white/8 bg-black/20 opacity-75 grayscale',
+              ].join(' ')}
+            >
+              <div className="flex items-start gap-4">
+                <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.06] ${badge.accent}`}>
+                  <badge.icon className="h-6 w-6" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">{badge.title}</h3>
+                      <p className="mt-1 text-sm text-slate-400">{badge.description}</p>
+                    </div>
+                    {badge.unlocked ? <BadgeCheck className="h-5 w-5 text-emerald-300" /> : null}
+                  </div>
+
+                  <div className="mt-4 text-sm text-slate-300">
+                    {badge.unlocked ? (
+                      <p>
+                        Unlocked
+                        {badge.unlockedAt ? (
+                          <span className="text-slate-400"> · {formatShortDate(badge.unlockedAt)}</span>
+                        ) : null}
+                      </p>
+                    ) : (
+                      <p>{badge.requirement}</p>
+                    )}
+                  </div>
+
+                  {typeof badge.progressPercent === 'number' ? (
+                    <div className="mt-4">
+                      <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+                        <span>Progress</span>
+                        <span>{badge.progressLabel}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-400" style={{ width: `${badge.progressPercent}%` }} />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="border-white/10 bg-[#0b101a] p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
+            <Star className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-xl font-semibold text-white">Leaderboard preview</h2>
+            <p className="text-sm text-slate-400">A weekly XP snapshot with your current position highlighted.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {analytics.leaderboardPreview.map((entry, index) => (
+            <div
+              key={`${entry.name}-${index}`}
+              className={[
+                'flex items-center justify-between rounded-2xl border p-4',
+                entry.isCurrentUser
+                  ? 'border-violet-400/30 bg-violet-500/10'
+                  : 'border-white/10 bg-white/[0.03]',
+              ].join(' ')}
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-sm font-semibold text-white">
+                  {index === 0 ? '1' : index === 1 ? '2' : index === 2 ? '3' : index + 1}
+                </span>
+                <div>
+                  <p className="font-semibold text-white">{entry.isCurrentUser ? 'You' : entry.name}</p>
+                  <p className="text-sm text-slate-400">{entry.weeklyXp} XP this week</p>
+                </div>
+              </div>
+
+              {index === 0 ? (
+                <Trophy className="h-5 w-5 text-amber-300" />
+              ) : index === 1 ? (
+                <Medal className="h-5 w-5 text-slate-300" />
+              ) : index === 2 ? (
+                <Award className="h-5 w-5 text-orange-300" />
+              ) : entry.isCurrentUser ? (
+                <Sparkles className="h-5 w-5 text-violet-300" />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
 }
