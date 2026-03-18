@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -11,7 +11,34 @@ import { Label } from '@/components/ui/label';
 import { Zap, Mail, Lock, User, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function SignUpPage() {
+function SignUpCardSkeleton() {
+    return (
+        <div className="min-h-screen relative flex items-center justify-center overflow-hidden p-4 pt-20">
+            <div className="pointer-events-none absolute inset-0 grid-bg opacity-30" />
+            <div className="absolute -right-32 top-1/4 h-96 w-96 rounded-full bg-indigo-500/10 blur-[100px]" />
+            <div className="absolute -left-32 bottom-1/4 h-96 w-96 rounded-full bg-purple-500/10 blur-[100px]" />
+
+            <div className="glass relative mt-6 w-full max-w-md overflow-hidden rounded-3xl border border-white/5 p-8 shadow-2xl">
+                <div className="absolute left-1/2 top-0 h-1 w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
+                <div className="mb-8 text-center">
+                    <div className="mx-auto mb-6 h-12 w-12 animate-pulse rounded-2xl bg-white/10" />
+                    <div className="mx-auto h-8 w-48 animate-pulse rounded bg-white/10" />
+                    <div className="mx-auto mt-3 h-4 w-64 animate-pulse rounded bg-white/5" />
+                </div>
+                <div className="space-y-4">
+                    <div className="h-11 animate-pulse rounded-xl bg-white/10" />
+                    <div className="h-px bg-white/5" />
+                    <div className="h-11 animate-pulse rounded-xl bg-white/5" />
+                    <div className="h-11 animate-pulse rounded-xl bg-white/5" />
+                    <div className="h-11 animate-pulse rounded-xl bg-white/5" />
+                    <div className="h-11 animate-pulse rounded-xl bg-white/10" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SignUpPageContent() {
     const searchParams = useSearchParams();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -21,16 +48,15 @@ export default function SignUpPage() {
     const { signUpWithEmail, signInWithGoogle } = useAuth();
     const selectedPlan = searchParams.get('plan');
 
-    const handleEmailSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleEmailSignUp = async (event: React.FormEvent) => {
+        event.preventDefault();
         if (!name || !email || !password) return toast.error('Please fill in all fields');
         if (password.length < 6) return toast.error('Password must be at least 6 characters');
 
         setIsLoading(true);
         try {
             await signUpWithEmail(email, password, name);
-            toast.success('Account created! Welcome to ICONIC ACADEMY 🎉');
-            // Router.push is handled inside AuthContext.signUpWithEmail → /onboarding
+            toast.success('Account created! Welcome to ICONIC ACADEMY!');
         } catch (error: unknown) {
             toast.error(error instanceof Error ? error.message : 'Failed to create account');
         } finally {
@@ -42,8 +68,7 @@ export default function SignUpPage() {
         setGoogleLoading(true);
         try {
             await signInWithGoogle();
-            toast.success('Welcome to ICONIC ACADEMY! 🎉');
-            // Router.push is handled inside AuthContext.signInWithGoogle → /dashboard
+            toast.success('Welcome to ICONIC ACADEMY!');
         } catch (error: unknown) {
             toast.error(error instanceof Error ? error.message : 'Google sign-up failed. Please try again.');
         } finally {
@@ -52,46 +77,50 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden pt-20">
-            <div className="absolute inset-0 pointer-events-none grid-bg opacity-30" />
-            <div className="absolute top-1/4 -right-32 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full" />
-            <div className="absolute bottom-1/4 -left-32 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full" />
+        <div className="min-h-screen relative flex items-center justify-center overflow-hidden p-4 pt-20">
+            <div className="pointer-events-none absolute inset-0 grid-bg opacity-30" />
+            <div className="absolute -right-32 top-1/4 h-96 w-96 rounded-full bg-indigo-500/10 blur-[100px]" />
+            <div className="absolute -left-32 bottom-1/4 h-96 w-96 rounded-full bg-purple-500/10 blur-[100px]" />
 
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-md"
             >
-                <div className="glass rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden mt-6">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
+                <div className="glass relative mt-6 overflow-hidden rounded-3xl border border-white/5 p-8 shadow-2xl">
+                    <div className="absolute left-1/2 top-0 h-1 w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
 
-                    <div className="text-center mb-8">
-                        <Link href="/" className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-6 shadow-lg shadow-indigo-500/25">
-                            <Zap className="w-6 h-6 text-white" fill="currentColor" />
+                    <div className="mb-8 text-center">
+                        <Link
+                            href="/"
+                            className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25"
+                        >
+                            <Zap className="h-6 w-6 text-white" fill="currentColor" />
                         </Link>
-                        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Create Account</h1>
-                        <p className="text-slate-400 text-sm">
+                        <h1 className="mb-2 text-3xl font-bold tracking-tight text-white">Create Account</h1>
+                        <p className="text-sm text-slate-400">
                             {selectedPlan
                                 ? `You are starting with the ${selectedPlan} plan selection.`
                                 : 'Start your premium A/L learning journey'}
                         </p>
-                        {selectedPlan && (
+                        {selectedPlan ? (
                             <div className="mt-4 inline-flex rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
                                 Plan selected: {selectedPlan}
                             </div>
-                        )}
+                        ) : null}
                     </div>
 
-                    {/* Google Sign-In — Primary recommended action */}
                     <Button
                         type="button"
                         variant="outline"
-                        className="w-full h-11 bg-white hover:bg-slate-100 text-slate-900 border-0 flex items-center justify-center gap-2 font-medium mb-6"
+                        className="mb-6 flex h-11 w-full items-center justify-center gap-2 border-0 bg-white font-medium text-slate-900 hover:bg-slate-100"
                         onClick={handleGoogleSignIn}
                         disabled={isLoading || googleLoading}
                     >
-                        {googleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                            <svg viewBox="0 0 24 24" className="w-5 h-5">
+                        {googleLoading ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                            <svg viewBox="0 0 24 24" className="h-5 w-5">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -103,7 +132,7 @@ export default function SignUpPage() {
 
                     <div className="my-4 flex items-center gap-3">
                         <div className="h-px flex-1 bg-white/5" />
-                        <span className="text-xs text-slate-500 uppercase font-medium">Or sign up with email</span>
+                        <span className="text-xs font-medium uppercase text-slate-500">Or sign up with email</span>
                         <div className="h-px flex-1 bg-white/5" />
                     </div>
 
@@ -111,48 +140,76 @@ export default function SignUpPage() {
                         <div className="space-y-2">
                             <Label htmlFor="name">Full Name</Label>
                             <div className="relative">
-                                <User className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                                <Input id="name" type="text" placeholder="John Doe"
-                                    className="pl-9 bg-black/20 border-white/10 focus:border-indigo-500/50"
-                                    value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading || googleLoading} />
+                                <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    className="border-white/10 bg-black/20 pl-9 focus:border-indigo-500/50"
+                                    value={name}
+                                    onChange={(event) => setName(event.target.value)}
+                                    disabled={isLoading || googleLoading}
+                                />
                             </div>
                         </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                                <Input id="email" type="email" placeholder="name@example.com"
-                                    className="pl-9 bg-black/20 border-white/10 focus:border-indigo-500/50"
-                                    value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || googleLoading} />
+                                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="name@example.com"
+                                    className="border-white/10 bg-black/20 pl-9 focus:border-indigo-500/50"
+                                    value={email}
+                                    onChange={(event) => setEmail(event.target.value)}
+                                    disabled={isLoading || googleLoading}
+                                />
                             </div>
                         </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="password">Password</Label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                                <Input id="password" type="password" placeholder="At least 6 characters"
-                                    className="pl-9 bg-black/20 border-white/10 focus:border-indigo-500/50"
-                                    value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || googleLoading} />
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    placeholder="At least 6 characters"
+                                    className="border-white/10 bg-black/20 pl-9 focus:border-indigo-500/50"
+                                    value={password}
+                                    onChange={(event) => setPassword(event.target.value)}
+                                    disabled={isLoading || googleLoading}
+                                />
                             </div>
                         </div>
 
-                        <Button type="submit"
-                            className="w-full h-11 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25 mt-6"
-                            disabled={isLoading || googleLoading}>
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
+                        <Button
+                            type="submit"
+                            className="mt-6 h-11 w-full border-0 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-purple-700"
+                            disabled={isLoading || googleLoading}
+                        >
+                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Account'}
                         </Button>
                     </form>
 
-                    <p className="text-center text-sm text-slate-400 mt-8">
+                    <p className="mt-8 text-center text-sm text-slate-400">
                         Already have an account?{' '}
-                        <Link href="/auth/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                        <Link href="/auth/login" className="font-medium text-indigo-400 transition-colors hover:text-indigo-300">
                             Sign In
                         </Link>
                     </p>
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function SignUpPage() {
+    return (
+        <Suspense fallback={<SignUpCardSkeleton />}>
+            <SignUpPageContent />
+        </Suspense>
     );
 }
