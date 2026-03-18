@@ -1,9 +1,7 @@
-import { OpenAI } from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || 'dummy_key_for_build', // Fallback for build
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy_key_for_build');
 
 export const runtime = 'edge';
 
@@ -11,11 +9,11 @@ export async function POST(req: Request) {
     try {
         const { messages, context, level } = await req.json();
 
-        if (!process.env.OPENAI_API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
             // Return mock response if no API key is set
             return NextResponse.json({
                 role: 'assistant',
-                content: `*(Mock Response - API Key Missing)*\n\nI see you're asking about **${context || 'your A/L studies'}** at the **${level || 'Beginner'}** level. To make this AI functional, please add your OPENAI_API_KEY to the .env.local file.`
+                content: `*(Mock Response - API Key Missing)*\n\nI see you're asking about **${context || 'your A/L studies'}** at the **${level || 'Beginner'}** level. To make this AI functional, please ensure GEMINI_API_KEY is properly set.`
             });
         }
 
@@ -33,20 +31,36 @@ CORE EDUCATIONAL PRINCIPLES (STRICTLY ENFORCED):
 
 If asked to "solve this", respond by asking them what the first step should be, or identifying the known variables first.`;
 
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini', // or gpt-3.5-turbo if preferred
-            stream: false,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                ...messages
-            ],
-            temperature: 0.7,
-            max_tokens: 800,
+        // Map openai role format to Gemini's user/model format
+        const geminiHistory = messages.slice(0, -1).map((m: any) => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }]
+        }));
+
+        const lastMessage = messages[messages.length - 1];
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            systemInstruction: systemPrompt
         });
 
-        return NextResponse.json(response.choices[0].message);
+        const chat = model.startChat({
+            history: geminiHistory,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 800,
+            }
+        });
+
+        const result = await chat.sendMessage(lastMessage.content);
+        const responseText = result.response.text();
+
+        return NextResponse.json({
+            role: 'assistant',
+            content: responseText
+        });
     } catch (error: any) {
-        console.error("OpenAI Error:", error);
+        console.error("Gemini AI Error:", error);
         return NextResponse.json(
             { error: error.message || 'An error occurred during AI generation' },
             { status: 500 }
