@@ -84,6 +84,8 @@ export interface UserProfile {
     subjects: SubjectId[];
     level: UserLevel;
     examYear: number;
+    school?: string;
+    district?: string;
     plan: SubscriptionPlan;
     xp: number;
     streak: number;

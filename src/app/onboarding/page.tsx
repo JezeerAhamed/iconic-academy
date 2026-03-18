@@ -3,16 +3,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { SUBJECTS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Zap, Check, ChevronRight, Loader2 } from 'lucide-react';
+import { Zap, Check, ChevronRight, Loader2, School, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-type Level = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export default function OnboardingPage() {
     const { user, profile } = useAuth();
@@ -21,12 +18,13 @@ export default function OnboardingPage() {
     const [step, setStep] = useState(1);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [examYear, setExamYear] = useState<number>(new Date().getFullYear() + 2);
-    const [level, setLevel] = useState<Level>('Beginner');
+    const [school, setSchool] = useState('');
+    const [district, setDistrict] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    // If not logged in, they shouldn't be here (handle via effect in a real app, simplified here)
-    if (!user && !profile && step === 1 && typeof window !== 'undefined') {
-        // router.push('/auth/login'); return null; // Simplified for dev
+    // If not logged in, they shouldn't be here
+    if (!user && !profile && typeof window !== 'undefined') {
+        // Handle redirect in layout or here
     }
 
     const handleSubjectToggle = (id: string) => {
@@ -43,12 +41,37 @@ export default function OnboardingPage() {
 
         setIsSaving(true);
         try {
+            // Update User Profile
             const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
                 subjects: selectedSubjects,
                 examYear,
-                level,
+                school: school || null,
+                district: district || null,
+                level: 'Beginner', // Default level
+                xp: 0,
+                streak: 0,
+                badges: [],
             });
+
+            // Initialize Gamification Document
+            const gamificationRef = doc(db, 'gamification', user.uid);
+            const gamificationSnap = await getDoc(gamificationRef);
+
+            if (!gamificationSnap.exists()) {
+                await setDoc(gamificationRef, {
+                    userId: user.uid,
+                    xp: 0,
+                    level: 'Beginner',
+                    streak: 0,
+                    lastActive: new Date().toISOString(),
+                    badges: [],
+                    completedLessons: 0,
+                    perfectQuizzes: 0,
+                    createdAt: new Date().toISOString(),
+                });
+            }
+
             toast.success("Profile setup complete!");
             router.push('/dashboard');
         } catch (error: any) {
@@ -105,8 +128,8 @@ export default function OnboardingPage() {
                                             key={subject.id}
                                             onClick={() => handleSubjectToggle(subject.id)}
                                             className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${isSelected
-                                                    ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
-                                                    : 'border-white/5 bg-black/20 hover:border-white/15'
+                                                ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
+                                                : 'border-white/5 bg-black/20 hover:border-white/15'
                                                 }`}
                                         >
                                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isSelected ? '' : 'opacity-50 grayscale'}`} style={{ backgroundColor: isSelected ? `${subject.color}20` : '' }}>
@@ -153,8 +176,8 @@ export default function OnboardingPage() {
                                             key={yr}
                                             onClick={() => setExamYear(yr)}
                                             className={`p-6 rounded-2xl border text-xl font-bold transition-all ${examYear === yr
-                                                    ? 'border-indigo-500 bg-indigo-500/10 text-white shadow-lg shadow-indigo-500/10'
-                                                    : 'border-white/5 bg-black/20 text-slate-400 hover:border-white/15 hover:text-slate-300'
+                                                ? 'border-indigo-500 bg-indigo-500/10 text-white shadow-lg shadow-indigo-500/10'
+                                                : 'border-white/5 bg-black/20 text-slate-400 hover:border-white/15 hover:text-slate-300'
                                                 }`}
                                         >
                                             {yr}
@@ -175,38 +198,48 @@ export default function OnboardingPage() {
                         </div>
                     )}
 
-                    {/* Step 3: Current Level */}
+                    {/* Step 3: School & District */}
                     {step === 3 && (
                         <div>
                             <div className="text-center mb-10">
-                                <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">What's your current level?</h2>
-                                <p className="text-slate-400">The AI will adapt content based on your starting point.</p>
+                                <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Tell us about yourself</h2>
+                                <p className="text-slate-400">Add your school and district to connect with local peers. (Optional)</p>
                             </div>
 
-                            <div className="space-y-4 mb-10">
-                                {[
-                                    { id: 'Beginner', desc: 'Just starting out or struggling with basics.', icon: '🌱' },
-                                    { id: 'Intermediate', desc: 'Know the theory, but need more practice.', icon: '📈' },
-                                    { id: 'Advanced', desc: 'Aiming for A grades. Focus on past papers.', icon: '🚀' },
-                                ].map((l) => (
-                                    <button
-                                        key={l.id}
-                                        onClick={() => setLevel(l.id as Level)}
-                                        className={`w-full flex items-center p-5 rounded-2xl border transition-all text-left ${level === l.id
-                                                ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
-                                                : 'border-white/5 bg-black/20 hover:border-white/15'
-                                            }`}
+                            <div className="space-y-6 mb-10 max-w-md mx-auto">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                                        <School className="w-4 h-4 text-indigo-400" /> School Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Royal College, Colombo"
+                                        value={school}
+                                        onChange={(e) => setSchool(e.target.value)}
+                                        className="w-full bg-[#0b101a] border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-colors"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 text-indigo-400" /> District
+                                    </label>
+                                    <select
+                                        value={district}
+                                        onChange={(e) => setDistrict(e.target.value)}
+                                        className="w-full bg-[#0b101a] border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-colors appearance-none"
                                     >
-                                        <div className="text-3xl mr-4">{l.icon}</div>
-                                        <div className="flex-1">
-                                            <h3 className={`font-bold text-lg ${level === l.id ? 'text-white' : 'text-slate-300'}`}>{l.id}</h3>
-                                            <p className="text-sm text-slate-500">{l.desc}</p>
-                                        </div>
-                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${level === l.id ? 'border-indigo-500 bg-indigo-500' : 'border-slate-700'}`}>
-                                            {level === l.id && <div className="w-2 h-2 rounded-full bg-white" />}
-                                        </div>
-                                    </button>
-                                ))}
+                                        <option value="">Select your district...</option>
+                                        <option value="Colombo">Colombo</option>
+                                        <option value="Gampaha">Gampaha</option>
+                                        <option value="Kalutara">Kalutara</option>
+                                        <option value="Kandy">Kandy</option>
+                                        <option value="Galle">Galle</option>
+                                        <option value="Matara">Matara</option>
+                                        <option value="Jaffna">Jaffna</option>
+                                        <option value="Kurunegala">Kurunegala</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="flex gap-4">
