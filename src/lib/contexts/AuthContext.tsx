@@ -42,10 +42,11 @@ async function ensureUserDocuments(firebaseUser: FirebaseUser): Promise<UserProf
             email: firebaseUser.email || '',
             displayName: firebaseUser.displayName || 'Student',
             photoURL: firebaseUser.photoURL || '',
-            subjects: [],
+            enrolledSubjects: [],
             level: 'Beginner' as any,
             examYear: new Date().getFullYear() + 1,
             plan: 'free' as any,
+            onboardingComplete: false,
             xp: 0,
             streak: 0,
             lastLoginDate: new Date().toISOString(),
@@ -64,6 +65,8 @@ async function ensureUserDocuments(firebaseUser: FirebaseUser): Promise<UserProf
             longestStreak: 0,
             lastActivityDate: serverTimestamp(),
             badges: [],
+            dailyGoalXP: 100,
+            todayXP: 0,
         });
 
         return { uid: firebaseUser.uid, ...newProfile };
@@ -102,8 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         provider.setCustomParameters({ prompt: 'select_account' });
         try {
             const result = await signInWithPopup(auth, provider);
-            await ensureUserDocuments(result.user);
-            router.push('/dashboard');
+            const userProfile = await ensureUserDocuments(result.user);
+            if (!userProfile.onboardingComplete) {
+                router.push('/onboarding');
+            } else {
+                router.push('/dashboard');
+            }
         } catch (error: any) {
             console.error('Google sign-in error:', error.code, error.message);
             // Re-throw with friendly message so the UI can display it
@@ -117,8 +124,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signInWithEmail = async (email: string, password: string) => {
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            router.push('/dashboard');
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userProfile = await ensureUserDocuments(userCredential.user);
+            if (!userProfile.onboardingComplete) {
+                router.push('/onboarding');
+            } else {
+                router.push('/dashboard');
+            }
         } catch (error: any) {
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 throw new Error('Invalid email or password.');

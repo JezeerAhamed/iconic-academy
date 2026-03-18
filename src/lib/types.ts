@@ -81,12 +81,13 @@ export interface UserProfile {
     email: string;
     displayName: string;
     photoURL?: string;
-    subjects: SubjectId[];
+    enrolledSubjects: SubjectId[];
     level: UserLevel;
     examYear: number;
-    school?: string;
+    schoolName?: string;
     district?: string;
     plan: SubscriptionPlan;
+    onboardingComplete: boolean;
     xp: number;
     streak: number;
     lastLoginDate: string;

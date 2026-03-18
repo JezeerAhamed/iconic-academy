@@ -2,19 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { SUBJECTS } from '@/lib/constants';
+import { SUBJECTS, SYLLABUS } from '@/lib/constants';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { Progress, Subject } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, Zap, BookOpen } from 'lucide-react';
+import { Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, Zap, BookOpen, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { getLevelProgress } from '@/lib/gamification';
+import toast from 'react-hot-toast';
 
 export default function DashboardOverview() {
-    const { profile } = useAuth();
+    const { user, profile } = useAuth();
 
     // Data states
     const [progressStats, setProgressStats] = useState({
@@ -23,6 +24,8 @@ export default function DashboardOverview() {
         subjectProgress: {} as Record<string, number>,
         lastSubjectId: ''
     });
+    const [dailyGoalXP, setDailyGoalXP] = useState(100);
+    const [savingGoal, setSavingGoal] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -79,16 +82,53 @@ export default function DashboardOverview() {
         fetchDashboardData();
     }, [profile?.uid]);
 
+    // Fetch current daily goal from gamification doc on load
+    useEffect(() => {
+        async function fetchGoal() {
+            if (!user?.uid) return;
+            const gamSnap = await getDoc(doc(db, 'gamification', user.uid));
+            if (gamSnap.exists()) {
+                setDailyGoalXP(gamSnap.data().dailyGoalXP ?? 100);
+            }
+        }
+        fetchGoal();
+    }, [user?.uid]);
+
+    const handleSetGoal = async (xp: number) => {
+        if (!user?.uid) return;
+        setSavingGoal(true);
+        try {
+            await updateDoc(doc(db, 'gamification', user.uid), { dailyGoalXP: xp });
+            setDailyGoalXP(xp);
+            toast.success(`Daily goal set to ${xp} XP! 🎯`);
+        } catch {
+            toast.error('Could not save goal. Please retry.');
+        } finally {
+            setSavingGoal(false);
+        }
+    };
+
     // Process Gamification Data
     const progressData = getLevelProgress(profile?.xp || 0, profile?.level || 'Beginner');
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-    const userSubjects = SUBJECTS.filter(s => profile?.subjects.includes(s.id));
+    const userSubjects = SUBJECTS.filter(s => (profile?.enrolledSubjects ?? []).includes(s.id));
     const continueLink = progressStats.lastSubjectId
         ? `/dashboard/subjects/${progressStats.lastSubjectId}`
         : userSubjects.length > 0 ? `/dashboard/subjects/${userSubjects[0].id}` : `/dashboard/subjects`;
+
+    // Find the first lesson of the first enrolled subject for empty-state CTA
+    const firstSubject = userSubjects[0];
+    const firstSubjectUnits = firstSubject ? (SYLLABUS as any)[firstSubject.id] ?? [] : [];
+    const firstUnit = firstSubjectUnits[0];
+    const firstLesson = firstUnit?.lessons?.[0];
+    const firstLessonLink = firstSubject && firstUnit && firstLesson
+        ? `/dashboard/subjects/${firstSubject.id}/${firstUnit.id}/${firstLesson.id}`
+        : `/dashboard/subjects`;
+
+    const isNewUser = !loading && progressStats.totalLessons === 0;
 
     return (
         <div className="space-y-8 pb-12">
@@ -227,81 +267,153 @@ export default function DashboardOverview() {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {!loading && userSubjects.map((subject, i) => {
-                        const completed = progressStats.subjectProgress[subject.id] || 0;
-                        const total = subject.lessonCount || 1;
-                        const percentage = Math.round((completed / total) * 100);
+                {/* ── EMPTY STATE: new users ── */}
+                {isNewUser ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* First Lesson CTA */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            <Card className="p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-500/20 relative overflow-hidden h-full flex flex-col justify-between">
+                                <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                                <div className="relative z-10">
+                                    <div className="text-4xl mb-4">🎯</div>
+                                    <h3 className="text-xl font-bold text-white mb-2">
+                                        Ready to start your A/L journey?
+                                    </h3>
+                                    <p className="text-slate-400 text-sm mb-6">
+                                        Your first lesson{firstSubject ? ` in ${firstSubject.name}` : ''} is waiting.
+                                        It only takes 15 minutes.
+                                    </p>
+                                    <Link href={firstLessonLink}>
+                                        <Button className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold flex items-center gap-2 group">
+                                            Start My First Lesson
+                                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </Card>
+                        </motion.div>
 
-                        return (
-                            <motion.div
-                                key={subject.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
-                            >
-                                <Link href={`/dashboard/subjects/${subject.id}`} className="block group">
-                                    <Card className="p-6 bg-black/20 border-white/5 hover:border-white/20 transition-all relative overflow-hidden h-full">
-                                        <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2" style={{ background: subject.color }} />
+                        {/* Daily Goal Setup */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                        >
+                            <Card className="p-8 bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-amber-500/20 h-full flex flex-col justify-between">
+                                <div>
+                                    <div className="text-4xl mb-4">🏆</div>
+                                    <h3 className="text-xl font-bold text-white mb-1">
+                                        Set your daily study goal
+                                    </h3>
+                                    <p className="text-slate-400 text-xs mb-6">
+                                        Most A-grade students earn 100 XP/day
+                                    </p>
 
-                                        <div className="flex items-start justify-between mb-8">
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                                                    style={{ background: `${subject.color}15`, color: subject.color }}
-                                                >
-                                                    {subject.icon}
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        {[50, 100, 150, 200].map((xp) => (
+                                            <button
+                                                key={xp}
+                                                onClick={() => handleSetGoal(xp)}
+                                                disabled={savingGoal}
+                                                className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${dailyGoalXP === xp
+                                                        ? 'border-amber-400 bg-amber-400/10 text-amber-300'
+                                                        : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
+                                                    }`}
+                                            >
+                                                <span>{xp} XP</span>
+                                                {dailyGoalXP === xp && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-slate-500">
+                                        You can change this anytime from your profile.
+                                    </p>
+                                </div>
+                            </Card>
+                        </motion.div>
+                    </div>
+
+                ) : (
+                    /* ── NORMAL STATE: subjects with progress ── */
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {!loading && userSubjects.map((subject, i) => {
+                            const completed = progressStats.subjectProgress[subject.id] || 0;
+                            const total = subject.lessonCount || 1;
+                            const percentage = Math.round((completed / total) * 100);
+
+                            return (
+                                <motion.div
+                                    key={subject.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.1 }}
+                                >
+                                    <Link href={`/dashboard/subjects/${subject.id}`} className="block group">
+                                        <Card className="p-6 bg-black/20 border-white/5 hover:border-white/20 transition-all relative overflow-hidden h-full">
+                                            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2" style={{ background: subject.color }} />
+
+                                            <div className="flex items-start justify-between mb-8">
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                                                        style={{ background: `${subject.color}15`, color: subject.color }}
+                                                    >
+                                                        {subject.icon}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-bold text-white">{subject.name}</h3>
+                                                        <p className="text-xs text-slate-500">{subject.unitCount} Units Total</p>
+                                                    </div>
                                                 </div>
+                                                <div className="text-right">
+                                                    <span className="text-2xl font-bold" style={{ color: subject.color }}>{percentage}%</span>
+                                                    <p className="text-xs text-slate-500">Completed</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
                                                 <div>
-                                                    <h3 className="text-lg font-bold text-white">{subject.name}</h3>
-                                                    <p className="text-xs text-slate-500">{subject.unitCount} Units Total</p>
+                                                    <div className="flex justify-between text-xs mb-1.5">
+                                                        <span className="text-slate-400">Overall Progress</span>
+                                                        <span className="text-white font-medium">{completed} / {total}</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${percentage}%`, background: subject.color }} />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-2xl font-bold" style={{ color: subject.color }}>{percentage}%</span>
-                                                <p className="text-xs text-slate-500">Completed</p>
-                                            </div>
-                                        </div>
 
-                                        <div className="space-y-4">
-                                            <div>
-                                                <div className="flex justify-between text-xs mb-1.5">
-                                                    <span className="text-slate-400">Overall Progress</span>
-                                                    <span className="text-white font-medium">{completed} / {total}</span>
-                                                </div>
-                                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${percentage}%`, background: subject.color }} />
+                                                <div className="pt-4 border-t border-white/5">
+                                                    <p className="text-xs text-slate-500 flex items-center gap-1.5 mb-2">
+                                                        <Clock className="w-3.5 h-3.5" /> Jump back in
+                                                    </p>
+                                                    <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
+                                                        Continue {subject.name} journey
+                                                    </p>
                                                 </div>
                                             </div>
+                                        </Card>
+                                    </Link>
+                                </motion.div>
+                            );
+                        })}
 
-                                            <div className="pt-4 border-t border-white/5">
-                                                <p className="text-xs text-slate-500 flex items-center gap-1.5 mb-2">
-                                                    <Clock className="w-3.5 h-3.5" /> Jump back in
-                                                </p>
-                                                <p className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">
-                                                    Continue {subject.name} journey
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </Card>
+                        {(!loading && userSubjects.length === 0) && (
+                            <div className="col-span-full p-8 text-center border border-dashed border-white/10 rounded-2xl bg-white/5">
+                                <BookOpen className="w-8 h-8 text-slate-500 mx-auto mb-3" />
+                                <h3 className="text-white font-medium mb-1">No subjects selected</h3>
+                                <p className="text-slate-400 text-sm mb-4">Go back to onboarding to select your subjects.</p>
+                                <Link href="/onboarding">
+                                    <Button variant="outline" className="border-indigo-500 text-indigo-400 hover:bg-indigo-500/10">
+                                        Select Subjects
+                                    </Button>
                                 </Link>
-                            </motion.div>
-                        );
-                    })}
-
-                    {(!loading && userSubjects.length === 0) && (
-                        <div className="col-span-full p-8 text-center border border-dashed border-white/10 rounded-2xl bg-white/5">
-                            <BookOpen className="w-8 h-8 text-slate-500 mx-auto mb-3" />
-                            <h3 className="text-white font-medium mb-1">No subjects selected</h3>
-                            <p className="text-slate-400 text-sm mb-4">Go back to onboarding to select your subjects.</p>
-                            <Link href="/onboarding">
-                                <Button variant="outline" className="border-indigo-500 text-indigo-400 hover:bg-indigo-500/10">
-                                    Select Subjects
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
-                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -44,14 +44,12 @@ export default function OnboardingPage() {
             // Update User Profile
             const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
-                subjects: selectedSubjects,
+                enrolledSubjects: selectedSubjects,
                 examYear,
-                school: school || null,
+                schoolName: school || null,
                 district: district || null,
-                level: 'Beginner', // Default level
-                xp: 0,
-                streak: 0,
-                badges: [],
+                onboardingComplete: true,
+                updatedAt: new Date().toISOString()
             });
 
             // Initialize Gamification Document
@@ -60,19 +58,21 @@ export default function OnboardingPage() {
 
             if (!gamificationSnap.exists()) {
                 await setDoc(gamificationRef, {
-                    userId: user.uid,
-                    xp: 0,
-                    level: 'Beginner',
-                    streak: 0,
-                    lastActive: new Date().toISOString(),
+                    xpTotal: 0,
+                    level: 1,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    lastActivityDate: new Date().toISOString(),
                     badges: [],
-                    completedLessons: 0,
-                    perfectQuizzes: 0,
-                    createdAt: new Date().toISOString(),
+                    dailyGoalXP: 100,
+                    todayXP: 0
                 });
             }
 
-            toast.success("Profile setup complete!");
+            toast.success("Welcome to ICONIC ACADEMY! 🎉 Let's get your first lesson done.", {
+                duration: 4000,
+                position: 'top-center'
+            });
             router.push('/dashboard');
         } catch (error: any) {
             toast.error(error.message || "Failed to save profile");
@@ -82,23 +82,16 @@ export default function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-12 flex flex-col items-center">
-            {/* Background */}
-            <div className="fixed inset-0 pointer-events-none grid-bg opacity-30" />
-            <div className="fixed top-0 inset-x-0 h-96 bg-gradient-to-b from-indigo-900/20 to-transparent pointer-events-none" />
-
-            <div className="w-full max-w-3xl px-4 relative z-10">
-                {/* Progress Bar */}
-                <div className="flex items-center justify-between mb-8">
+        <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center py-12 px-4 selection:bg-purple-200">
+            <div className="w-full max-w-lg relative z-10 w-full flex flex-col items-center">
+                {/* Progress Dots */}
+                <div className="flex items-center justify-center gap-2 mb-8">
                     {[1, 2, 3].map((s) => (
-                        <div key={s} className="flex items-center">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${step >= s ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25' : 'bg-white/5 text-slate-500 border border-white/10'}`}>
-                                {step > s ? <Check className="w-4 h-4" /> : s}
-                            </div>
-                            {s < 3 && (
-                                <div className={`w-24 sm:w-48 h-1 mx-2 rounded-full ${step > s ? 'bg-indigo-500/50' : 'bg-white/5'}`} />
-                            )}
-                        </div>
+                        <div
+                            key={s}
+                            className={`w-3 h-3 rounded-full transition-colors ${step === s ? 'bg-purple-600' : step > s ? 'bg-purple-300' : 'bg-slate-200'
+                                }`}
+                        />
                     ))}
                 </div>
 
@@ -107,43 +100,45 @@ export default function OnboardingPage() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="glass rounded-3xl p-8 sm:p-12 border border-white/10 relative overflow-hidden"
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className="w-full"
                 >
                     {/* Step 1: Subjects */}
                     {step === 1 && (
-                        <div>
-                            <div className="text-center mb-10">
-                                <span className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-500/10 text-indigo-400 mb-6">
-                                    <Zap className="w-6 h-6" />
-                                </span>
-                                <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">What are you studying?</h2>
-                                <p className="text-slate-400">Select the subjects you want to focus on.</p>
+                        <div className="w-full">
+                            <div className="text-center mb-8">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                                    Which subjects are you studying for A/L?
+                                </h1>
+                                <p className="text-slate-500 text-sm sm:text-base">
+                                    Select all that apply. You can change this later.
+                                </p>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
                                 {SUBJECTS.map((subject) => {
                                     const isSelected = selectedSubjects.includes(subject.id);
                                     return (
                                         <button
                                             key={subject.id}
                                             onClick={() => handleSubjectToggle(subject.id)}
-                                            className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${isSelected
-                                                ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
-                                                : 'border-white/5 bg-black/20 hover:border-white/15'
+                                            className={`relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all ${isSelected
+                                                    ? 'border-purple-600 bg-purple-50 shadow-sm'
+                                                    : 'border-slate-200 bg-white hover:border-slate-300'
                                                 }`}
                                         >
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isSelected ? '' : 'opacity-50 grayscale'}`} style={{ backgroundColor: isSelected ? `${subject.color}20` : '' }}>
-                                                {subject.icon}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{subject.name}</h3>
-                                                <p className="text-xs text-slate-500">{subject.description.slice(0, 40)}...</p>
-                                            </div>
                                             {isSelected && (
-                                                <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white">
-                                                    <Check className="w-4 h-4" />
+                                                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                                                    <Check className="w-3 h-3" strokeWidth={3} />
                                                 </div>
                                             )}
+                                            <div className="text-4xl mb-3">{subject.icon}</div>
+                                            <h3 className={`font-bold text-lg mb-1 ${isSelected ? 'text-purple-900' : 'text-slate-800'}`}>
+                                                {subject.name}
+                                            </h3>
+                                            <p className={`text-sm ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                                                {subject.id === 'maths' ? '16 Topics' : `${subject.unitCount} Units`}
+                                            </p>
                                         </button>
                                     );
                                 })}
@@ -152,47 +147,77 @@ export default function OnboardingPage() {
                             <Button
                                 onClick={() => setStep(2)}
                                 disabled={selectedSubjects.length === 0}
-                                className="w-full h-12 bg-white text-black hover:bg-slate-200 font-bold text-lg"
+                                className={`w-full h-14 rounded-xl font-bold text-lg transition-all ${selectedSubjects.length > 0
+                                        ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200'
+                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    }`}
                             >
-                                Continue
-                                <ChevronRight className="w-5 h-5 ml-2" />
+                                Next
                             </Button>
                         </div>
                     )}
 
                     {/* Step 2: Exam Year */}
                     {step === 2 && (
-                        <div>
-                            <div className="text-center mb-10">
-                                <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">When is your exam?</h2>
-                                <p className="text-slate-400">This helps us schedule your study plan perfectly.</p>
+                        <div className="w-full">
+                            <div className="text-center mb-8">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                                    When is your A/L examination?
+                                </h1>
+                                <p className="text-slate-500 text-sm sm:text-base">
+                                    We will personalise your study plan around your exam date.
+                                </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 mb-10 max-w-md mx-auto">
-                                {[...Array(4)].map((_, i) => {
-                                    const yr = new Date().getFullYear() + i;
+                            <div className="flex flex-col gap-3 sm:gap-4 mb-8">
+                                {[
+                                    { year: 2025, desc: 'Exam in a few months' },
+                                    { year: 2026, desc: 'About a year away', mostCommon: true },
+                                    { year: 2027, desc: 'Plenty of time to prepare' }
+                                ].map((opt) => {
+                                    const isSelected = examYear === opt.year;
                                     return (
                                         <button
-                                            key={yr}
-                                            onClick={() => setExamYear(yr)}
-                                            className={`p-6 rounded-2xl border text-xl font-bold transition-all ${examYear === yr
-                                                ? 'border-indigo-500 bg-indigo-500/10 text-white shadow-lg shadow-indigo-500/10'
-                                                : 'border-white/5 bg-black/20 text-slate-400 hover:border-white/15 hover:text-slate-300'
+                                            key={opt.year}
+                                            onClick={() => setExamYear(opt.year)}
+                                            className={`relative flex flex-col justify-center p-5 rounded-2xl border-2 transition-all text-left ${isSelected
+                                                    ? 'border-purple-600 bg-purple-600 text-white shadow-md shadow-purple-200'
+                                                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800'
                                                 }`}
                                         >
-                                            {yr}
+                                            <div className="flex items-center justify-between w-full">
+                                                <h3 className="font-bold text-2xl">{opt.year}</h3>
+                                                {opt.mostCommon && (
+                                                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                        most common
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className={`text-sm mt-1 opacity-90 ${isSelected ? 'text-purple-100' : 'text-slate-500'}`}>
+                                                {opt.desc}
+                                            </p>
                                         </button>
                                     );
                                 })}
                             </div>
 
-                            <div className="flex gap-4">
-                                <Button variant="outline" onClick={() => setStep(1)} className="w-1/3 h-12 bg-transparent text-white border-white/10 hover:bg-white/5">
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setStep(1)}
+                                    className="w-14 h-14 rounded-xl text-slate-500 hover:bg-slate-100 font-bold"
+                                >
                                     Back
                                 </Button>
-                                <Button onClick={() => setStep(3)} className="w-2/3 h-12 bg-white text-black hover:bg-slate-200 font-bold text-lg">
-                                    Continue
-                                    <ChevronRight className="w-5 h-5 ml-2" />
+                                <Button
+                                    onClick={() => setStep(3)}
+                                    disabled={!examYear}
+                                    className={`flex-1 h-14 rounded-xl font-bold text-lg transition-all ${examYear
+                                            ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200'
+                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                        }`}
+                                >
+                                    Next
                                 </Button>
                             </div>
                         </div>
@@ -200,55 +225,64 @@ export default function OnboardingPage() {
 
                     {/* Step 3: School & District */}
                     {step === 3 && (
-                        <div>
-                            <div className="text-center mb-10">
-                                <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Tell us about yourself</h2>
-                                <p className="text-slate-400">Add your school and district to connect with local peers. (Optional)</p>
+                        <div className="w-full">
+                            <div className="text-center mb-8">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                                    Which school are you from?
+                                </h1>
+                                <p className="text-slate-500 text-sm sm:text-base">
+                                    Optional — helps us show you how your school ranks nationally.
+                                </p>
                             </div>
 
-                            <div className="space-y-6 mb-10 max-w-md mx-auto">
+                            <div className="space-y-5 mb-8 text-left">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                                        <School className="w-4 h-4 text-indigo-400" /> School Name
-                                    </label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Royal College, Colombo"
+                                        placeholder="School name (e.g. Royal College)"
                                         value={school}
                                         onChange={(e) => setSchool(e.target.value)}
-                                        className="w-full bg-[#0b101a] border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-colors"
+                                        className="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl px-4 py-4 outline-none focus:border-purple-600 focus:bg-white transition-all font-medium"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-indigo-400" /> District
-                                    </label>
+                                <div className="space-y-2 relative">
                                     <select
                                         value={district}
                                         onChange={(e) => setDistrict(e.target.value)}
-                                        className="w-full bg-[#0b101a] border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-colors appearance-none"
+                                        className="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl px-4 py-4 outline-none focus:border-purple-600 focus:bg-white transition-all font-medium appearance-none"
                                     >
-                                        <option value="">Select your district...</option>
-                                        <option value="Colombo">Colombo</option>
-                                        <option value="Gampaha">Gampaha</option>
-                                        <option value="Kalutara">Kalutara</option>
-                                        <option value="Kandy">Kandy</option>
-                                        <option value="Galle">Galle</option>
-                                        <option value="Matara">Matara</option>
-                                        <option value="Jaffna">Jaffna</option>
-                                        <option value="Kurunegala">Kurunegala</option>
-                                        <option value="Other">Other</option>
+                                        <option value="" disabled>Select your district</option>
+                                        {[
+                                            'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
+                                            'Galle', 'Matara', 'Hambantota', 'Jaffna', 'Kilinochchi', 'Mannar',
+                                            'Vavuniya', 'Mullaitivu', 'Batticaloa', 'Ampara', 'Trincomalee',
+                                            'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
+                                            'Monaragala', 'Ratnapura', 'Kegalle'
+                                        ].map(d => (
+                                            <option key={d} value={d}>{d}</option>
+                                        ))}
                                     </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        ▼
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-4">
-                                <Button variant="outline" onClick={() => setStep(2)} className="w-1/3 h-12 bg-transparent text-white border-white/10 hover:bg-white/5">
-                                    Back
+                            <div className="flex flex-col items-center gap-4">
+                                <Button
+                                    onClick={handleComplete}
+                                    disabled={isSaving}
+                                    className="w-full h-14 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200 font-bold text-lg border-0 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Start Learning!"}
                                 </Button>
-                                <Button onClick={handleComplete} disabled={isSaving} className="w-2/3 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold text-lg border-0 shadow-lg shadow-indigo-500/25">
-                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Setup"}
-                                </Button>
+                                <button
+                                    onClick={handleComplete}
+                                    disabled={isSaving}
+                                    className="text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors"
+                                >
+                                    Skip for now →
+                                </button>
                             </div>
                         </div>
                     )}

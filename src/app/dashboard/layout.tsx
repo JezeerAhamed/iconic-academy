@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     useEffect(() => {
         if (!loading && !user) {
             router.push('/auth/login');
-        } else if (!loading && user && profile && profile.subjects.length === 0) {
+        } else if (!loading && user && profile && !profile.onboardingComplete) {
             // User hasn't finished onboarding
             router.push('/onboarding');
         }
@@ -27,8 +27,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         );
     }
 
-    // Prevent rendering dashboard if profile is missing subjects (onboarding not done)
-    if (profile && profile.subjects.length === 0) {
+    // Prevent rendering dashboard if profile is missing onboardingComplete
+    if (profile && !profile.onboardingComplete) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
