@@ -1,10 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Zap, Twitter, Instagram, Youtube, Mail, Phone } from 'lucide-react';
 import { SUBJECTS } from '@/lib/constants';
 
 export default function Footer() {
+    const pathname = usePathname();
+
+    // Hide marketing footer inside the authenticated app
+    if (pathname?.startsWith('/dashboard')) {
+        return null;
+    }
+
     return (
         <footer className="border-t border-white/5 bg-[#060a11]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

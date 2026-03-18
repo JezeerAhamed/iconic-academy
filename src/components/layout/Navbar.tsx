@@ -8,11 +8,13 @@ import { Menu, X, Zap, BookOpen, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from '@/lib/constants';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const pathname = usePathname();
+    const { user, signOut } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -68,22 +70,57 @@ export default function Navbar() {
                         ))}
                     </nav>
 
-                    {/* CTA Buttons */}
+    // CTA Buttons
                     <div className="hidden md:flex items-center gap-3">
-                        <Link href="/auth/login">
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-white/5">
-                                Sign In
-                            </Button>
-                        </Link>
-                        <Link href="/auth/signup">
-                            <Button
-                                size="sm"
-                                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25 font-semibold"
-                            >
-                                Start Free
-                                <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                        </Link>
+                        {user ? (
+                            <div className="flex items-center gap-4">
+                                <Link
+                                    href="/dashboard"
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10"
+                                >
+                                    Dashboard
+                                </Link>
+                                <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+                                    <div className="flex items-center gap-2">
+                                        {user.photoURL ? (
+                                            <img src={user.photoURL} alt="Avatar" className="w-8 h-8 rounded-full border border-white/20" />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold text-white uppercase">
+                                                {user.displayName?.charAt(0) || user.email?.charAt(0) || '?'}
+                                            </div>
+                                        )}
+                                        <span className="text-sm font-medium text-white max-w-[100px] truncate">
+                                            {user.displayName || 'Student'}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => signOut()}
+                                        className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 h-8 px-3"
+                                    >
+                                        Sign Out
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <Link href="/auth/login">
+                                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-white/5">
+                                        Sign In
+                                    </Button>
+                                </Link>
+                                <Link href="/auth/signup">
+                                    <Button
+                                        size="sm"
+                                        className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25 font-semibold"
+                                    >
+                                        Start Free
+                                        <ChevronRight className="w-4 h-4 ml-1" />
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Toggle */}
@@ -124,16 +161,50 @@ export default function Navbar() {
                                 </Link>
                             ))}
                             <div className="pt-3 border-t border-white/5 flex flex-col gap-2">
-                                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                                    <Button variant="ghost" className="w-full text-slate-400 hover:text-white justify-start">
-                                        Sign In
-                                    </Button>
-                                </Link>
-                                <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
-                                    <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
-                                        Start For Free
-                                    </Button>
-                                </Link>
+                                {user ? (
+                                    <>
+                                        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 mb-2">
+                                            {user.photoURL ? (
+                                                <img src={user.photoURL} alt="Avatar" className="w-10 h-10 rounded-full border border-white/20" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-lg font-bold text-white uppercase">
+                                                    {user.displayName?.charAt(0) || user.email?.charAt(0) || '?'}
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-white border-none bg-transparent m-0 p-0 text-left">
+                                                    {user.displayName || 'Student'}
+                                                </span>
+                                                <span className="text-xs text-slate-500">{user.email}</span>
+                                            </div>
+                                        </div>
+                                        <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                                            <Button className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/10 justify-start">
+                                                Go to Dashboard
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            variant="ghost"
+                                            onClick={() => { signOut(); setIsOpen(false); }}
+                                            className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 justify-start"
+                                        >
+                                            Sign Out
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                                            <Button variant="ghost" className="w-full text-slate-400 hover:text-white justify-start">
+                                                Sign In
+                                            </Button>
+                                        </Link>
+                                        <Link href="/auth/signup" onClick={() => setIsOpen(false)}>
+                                            <Button className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0">
+                                                Start For Free
+                                            </Button>
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </motion.div>
