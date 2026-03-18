@@ -5,7 +5,7 @@ import { SUBJECTS } from '@/lib/constants';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, Zap } from 'lucide-react';
+import { Trophy, Flame, Clock, BrainCircuit, Target, ArrowRight, Zap, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { getLevelProgress } from '@/lib/gamification';
