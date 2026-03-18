@@ -41,8 +41,14 @@ export async function POST(req: Request) {
             }
         }
 
+        // Remove initial assistant greeting if it's the first message
+        let validMessages = messages.slice(0, -1);
+        if (validMessages.length > 0 && validMessages[0].role !== 'user') {
+            validMessages = validMessages.slice(1);
+        }
+
         // Map openai role format to Gemini's user/model format
-        const geminiHistory = messages.slice(0, -1).map((m: any) => ({
+        const geminiHistory = validMessages.map((m: any) => ({
             role: m.role === 'user' ? 'user' : 'model',
             parts: [{ text: m.content }]
         }));
