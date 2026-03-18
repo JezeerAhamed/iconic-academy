@@ -81,6 +81,7 @@ export interface UserProfile {
     email: string;
     displayName: string;
     photoURL?: string;
+    isAdmin?: boolean;
     enrolledSubjects: SubjectId[];
     level: UserLevel;
     examYear: number;

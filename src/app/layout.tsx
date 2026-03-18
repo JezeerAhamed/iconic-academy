@@ -13,11 +13,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "ICONIC ACADEMY – AI-Powered A/L Learning Platform",
+    default: "ICONIC ACADEMY — Sri Lanka's A/L Learning Platform",
     template: "%s | ICONIC ACADEMY",
   },
   description:
-    "Sri Lanka's most advanced A/L learning platform. Master Physics, Chemistry, Biology & Combined Maths with AI-powered tutoring, past papers, and structured learning paths.",
+    "Sri Lanka's A/L learning platform for Physics, Chemistry, Biology, and Combined Maths with AI tutoring, past papers, and structured exam preparation.",
   keywords: [
     "A/L Sri Lanka",
     "Advanced Level",
@@ -35,14 +35,21 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_LK",
-    title: "ICONIC ACADEMY – AI-Powered A/L Learning Platform",
-    description: "Master Sri Lankan A/L subjects with AI-powered tutoring and structured learning.",
+    title: "ICONIC ACADEMY — Sri Lanka's A/L Learning Platform",
+    description:
+      "Master Sri Lankan A/L subjects with AI tutoring, past papers, and structured learning paths built for the local syllabus.",
     siteName: "ICONIC ACADEMY",
   },
   twitter: {
     card: "summary_large_image",
     title: "ICONIC ACADEMY",
-    description: "Sri Lanka's #1 AI-powered A/L learning platform.",
+    description:
+      "Sri Lanka's A/L learning platform built for Physics, Chemistry, Biology, and Combined Maths.",
+  },
+  icons: {
+    icon: "/icon",
+    shortcut: "/icon",
+    apple: "/icon",
   },
 };
 
@@ -72,11 +79,11 @@ export default function RootLayout({
             position="top-right"
             toastOptions={{
               style: {
-                background: '#0f1623',
-                color: '#f1f5f9',
-                border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '12px',
-                fontSize: '14px',
+                background: "#0f1623",
+                color: "#f1f5f9",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: "12px",
+                fontSize: "14px",
               },
             }}
           />

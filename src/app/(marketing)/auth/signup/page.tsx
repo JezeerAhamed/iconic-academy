@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,12 +12,14 @@ import { Zap, Mail, Lock, User, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function SignUpPage() {
+    const searchParams = useSearchParams();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
     const { signUpWithEmail, signInWithGoogle } = useAuth();
+    const selectedPlan = searchParams.get('plan');
 
     const handleEmailSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,8 +31,8 @@ export default function SignUpPage() {
             await signUpWithEmail(email, password, name);
             toast.success('Account created! Welcome to ICONIC ACADEMY 🎉');
             // Router.push is handled inside AuthContext.signUpWithEmail → /onboarding
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to create account');
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to create account');
         } finally {
             setIsLoading(false);
         }
@@ -41,8 +44,8 @@ export default function SignUpPage() {
             await signInWithGoogle();
             toast.success('Welcome to ICONIC ACADEMY! 🎉');
             // Router.push is handled inside AuthContext.signInWithGoogle → /dashboard
-        } catch (error: any) {
-            toast.error(error.message || 'Google sign-up failed. Please try again.');
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Google sign-up failed. Please try again.');
         } finally {
             setGoogleLoading(false);
         }
@@ -67,7 +70,16 @@ export default function SignUpPage() {
                             <Zap className="w-6 h-6 text-white" fill="currentColor" />
                         </Link>
                         <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Create Account</h1>
-                        <p className="text-slate-400 text-sm">Start your premium A/L learning journey</p>
+                        <p className="text-slate-400 text-sm">
+                            {selectedPlan
+                                ? `You are starting with the ${selectedPlan} plan selection.`
+                                : 'Start your premium A/L learning journey'}
+                        </p>
+                        {selectedPlan && (
+                            <div className="mt-4 inline-flex rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">
+                                Plan selected: {selectedPlan}
+                            </div>
+                        )}
                     </div>
 
                     {/* Google Sign-In — Primary recommended action */}

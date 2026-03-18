@@ -4,33 +4,48 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { ShieldAlert, LayoutDashboard, FileVideo, Users, Settings, LogOut, Loader2 } from 'lucide-react';
+import { ShieldAlert, LayoutDashboard, FileVideo, Users, Settings, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { user, profile, loading, signOut } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const isAdmin = profile?.isAdmin === true;
 
     useEffect(() => {
         if (!loading) {
             if (!user) {
                 router.push('/auth/login');
-            } else if (profile && profile.email !== 'jezeerahamed254@gmail.com') {
-                // Simple mock of Admin Authorization using the creator's email
-                // In reality, this would check profile.role === 'admin'
+            } else if (profile && !isAdmin) {
                 router.push('/dashboard');
             }
         }
-    }, [user, profile, loading, router]);
+    }, [user, profile, loading, router, isAdmin]);
 
     if (loading) return (
-        <div className="min-h-screen bg-[#080c14] flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <div className="min-h-screen bg-[#080c14] p-6">
+            <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[240px_1fr]">
+                <div className="space-y-4 rounded-3xl border border-white/5 bg-[#0b101a] p-6">
+                    <div className="h-6 w-28 animate-pulse rounded bg-white/10" />
+                    <div className="h-12 animate-pulse rounded-2xl bg-white/5" />
+                    <div className="h-12 animate-pulse rounded-2xl bg-white/5" />
+                    <div className="h-12 animate-pulse rounded-2xl bg-white/5" />
+                </div>
+                <div className="space-y-6 rounded-3xl border border-white/5 bg-[#0b101a] p-6">
+                    <div className="h-8 w-48 animate-pulse rounded bg-white/10" />
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <div className="h-28 animate-pulse rounded-2xl bg-white/5" />
+                        <div className="h-28 animate-pulse rounded-2xl bg-white/5" />
+                        <div className="h-28 animate-pulse rounded-2xl bg-white/5" />
+                    </div>
+                    <div className="h-80 animate-pulse rounded-3xl bg-white/5" />
+                </div>
+            </div>
         </div>
     );
 
-    if (!user || (profile && profile.email !== 'jezeerahamed254@gmail.com')) {
+    if (!user || (profile && !isAdmin)) {
         return (
             <div className="min-h-screen bg-[#080c14] flex flex-col items-center justify-center text-center p-4">
                 <ShieldAlert className="w-16 h-16 text-rose-500 mb-4" />

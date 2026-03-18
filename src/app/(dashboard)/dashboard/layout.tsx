@@ -6,7 +6,41 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import MobileBottomNav from '@/components/layout/MobileBottomNav';
-import { Loader2 } from 'lucide-react';
+
+function DashboardLayoutSkeleton() {
+    return (
+        <div className="flex min-h-screen bg-[#080c14]">
+            <div className="hidden w-64 border-r border-white/5 bg-[#0b101a] md:block">
+                <div className="space-y-4 p-5">
+                    <div className="h-8 w-28 animate-pulse rounded bg-white/10" />
+                    <div className="h-16 animate-pulse rounded-2xl bg-white/5" />
+                    {Array.from({ length: 6 }).map((_, index) => (
+                        <div key={index} className="h-11 animate-pulse rounded-xl bg-white/5" />
+                    ))}
+                </div>
+            </div>
+
+            <main className="flex-1 p-4 pt-16 md:p-8">
+                <div className="mx-auto max-w-7xl space-y-6">
+                    <div className="h-5 w-36 animate-pulse rounded bg-white/10" />
+                    <div className="rounded-3xl border border-white/10 bg-[#0b101a] p-6">
+                        <div className="h-8 w-56 animate-pulse rounded bg-white/10" />
+                        <div className="mt-3 h-4 w-72 animate-pulse rounded bg-white/5" />
+                        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            <div className="h-36 animate-pulse rounded-2xl bg-white/5" />
+                            <div className="h-36 animate-pulse rounded-2xl bg-white/5" />
+                            <div className="h-36 animate-pulse rounded-2xl bg-white/5" />
+                        </div>
+                    </div>
+                    <div className="grid gap-6 xl:grid-cols-2">
+                        <div className="h-72 animate-pulse rounded-3xl bg-[#0b101a]" />
+                        <div className="h-72 animate-pulse rounded-3xl bg-[#0b101a]" />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const { user, profile, loading } = useAuth();
@@ -21,19 +55,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, [user, profile, loading, router]);
 
     if (loading || !user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-            </div>
-        );
+        return <DashboardLayoutSkeleton />;
     }
 
     if (profile && !profile.onboardingComplete) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-            </div>
-        );
+        return <DashboardLayoutSkeleton />;
     }
 
     return (

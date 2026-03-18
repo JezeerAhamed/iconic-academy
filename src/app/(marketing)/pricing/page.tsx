@@ -2,206 +2,309 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Zap, HelpCircle } from 'lucide-react';
+import { Check, HelpCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
+const STRIPE_PRICES: Record<'basic' | 'premium' | 'elite', string> = {
+  basic: process.env.NEXT_PUBLIC_STRIPE_PRICE_BASIC || 'price_basic_placeholder',
+  premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM || 'price_premium_placeholder',
+  elite: process.env.NEXT_PUBLIC_STRIPE_PRICE_ELITE || 'price_elite_placeholder',
+};
+
+const plans = {
+  free: {
+    name: 'Free',
+    price: 0,
+    subtitle: 'Try the platform',
+    features: ['1 subject', 'First 2 units', 'AI Tutor 10/day', 'Past Papers MCQ 5/day'],
+  },
+  basic: {
+    name: 'Basic',
+    price: 990,
+    subtitle: 'For daily self-study',
+    features: ['All 4 subjects', 'Full syllabus access', 'Unlimited AI tutor', 'Unlimited MCQ past papers'],
+  },
+  premium: {
+    name: 'Premium',
+    price: 1990,
+    subtitle: 'For students pushing for top grades',
+    features: ['Everything in Basic', 'Video lessons', 'AI essay grading', 'Personalized study plan'],
+  },
+  elite: {
+    name: 'Elite',
+    price: 3490,
+    subtitle: 'For maximum support',
+    features: ['Everything in Premium', 'Weekly live sessions', 'Voice AI', 'Parent dashboard'],
+  },
+} as const;
+
+const comparisonRows = [
+  ['Subjects', '1', '4', '4', '4'],
+  ['Units', '2', 'All', 'All', 'All'],
+  ['AI Tutor', '10/day', 'Unl', 'Unl', 'Unl'],
+  ['Past Papers MCQ', '5/day', 'Unl', 'Unl', 'Unl'],
+  ['Video Lessons', 'No', 'No', 'Yes', 'Yes'],
+  ['AI Essay Grading', 'No', 'No', 'Yes', 'Yes'],
+  ['Study Plan', 'No', 'No', 'Yes', 'Yes'],
+  ['Live Sessions', 'No', 'No', 'No', 'Yes'],
+  ['Voice AI', 'No', 'No', 'No', 'Yes'],
+  ['Parent Dashboard', 'No', 'No', 'No', 'Yes'],
+];
+
+const faqs = [
+  {
+    question: 'Can I switch plans?',
+    answer: 'Yes. You can upgrade or downgrade anytime and the change takes effect immediately.',
+  },
+  {
+    question: 'Is there a student discount?',
+    answer:
+      'All plans are already priced specifically for Sri Lankan students. Group rates are available for schools and tuition batches.',
+  },
+  {
+    question: 'What if I fail my A/L?',
+    answer:
+      "We offer a full refund if you don't improve your mock exam scores after 30 days. Contact us and we will review it with you.",
+  },
+  {
+    question: 'Do you support Tamil medium?',
+    answer:
+      'Yes. Our AI tutor responds in Tamil when you write in Tamil. A fuller Tamil UI is planned in the next update.',
+  },
+  {
+    question: 'Can I pay by card securely?',
+    answer: 'Yes. Paid plans use Stripe checkout for secure card payments and subscription management.',
+  },
+];
+
 export default function PricingPage() {
-    const { user } = useAuth();
-    const router = useRouter();
-    const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const { user, profile } = useAuth();
+  const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [lastAttemptedPlan, setLastAttemptedPlan] = useState<keyof typeof plans | null>(null);
 
-    // Hardcode Stripe Prices matching the instruction prompt or via Env Vars 
-    const STRIPE_PRICES: Record<string, string> = {
-        free: 'free',
-        basic: process.env.NEXT_PUBLIC_STRIPE_PRICE_BASIC || 'price_basic_placeholder',
-        premium: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM || 'price_premium_placeholder',
-        elite: process.env.NEXT_PUBLIC_STRIPE_PRICE_ELITE || 'price_elite_placeholder'
-    };
+  const currentPlan = profile?.plan ?? 'free';
 
-    const PLANS = {
-        free: {
-            name: 'Free',
-            price: 0,
-            features: ['1 Subject (First 2 Units)', 'AI Tutor (Basic Limit)', '5 Past Papers / Day']
-        },
-        basic: {
-            name: 'Basic',
-            price: 990,
-            features: ['All 4 Subjects (Full Syllabus)', 'Unlimited AI Tutor', 'Full MCQ Engine', 'No Video Lessons']
-        },
-        premium: {
-            name: 'Premium',
-            price: 1990,
-            features: ['Everything in Basic', 'Video Lessons for all Topics', 'AI Marking for Structured Essays', 'Personalized Study Plan']
-        },
-        elite: {
-            name: 'Elite',
-            price: 3490,
-            features: ['Everything in Premium', 'Weekly Live Doubt Sessions', 'Voice AI Tutoring', 'Parent Dashboard', 'Priority Processing']
-        }
-    };
+  const handleCheckout = async (planKey: keyof typeof plans) => {
+    setCheckoutError(null);
+    setLastAttemptedPlan(planKey);
 
-    const handleCheckout = async (planKey: string) => {
-        if (!user) {
-            router.push(`/auth/signup?plan=${planKey}`);
-            return;
-        }
+    if (!user) {
+      router.push(`/auth/signup?plan=${planKey}`);
+      return;
+    }
 
-        if (planKey === 'free') {
-            router.push('/dashboard');
-            return;
-        }
+    if (planKey === 'free' || currentPlan === planKey) {
+      router.push('/dashboard');
+      return;
+    }
 
-        const currentPlan = (user as any)?.plan || 'free';
-        if (currentPlan === planKey) {
-            router.push('/dashboard');
-            return;
-        }
+    setLoadingPlan(planKey);
 
-        setLoadingPlan(planKey);
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: STRIPE_PRICES[planKey as 'basic' | 'premium' | 'elite'],
+          userId: user.uid,
+          userEmail: user.email,
+        }),
+      });
 
-        try {
-            const response = await fetch('/api/stripe/checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    priceId: STRIPE_PRICES[planKey],
-                    userId: user.uid,
-                    userEmail: user.email
-                }),
-            });
-            const data = await response.json();
+      const data = (await response.json()) as { url?: string; error?: string };
 
-            if (data.url) {
-                window.location.href = data.url;
-            } else {
-                alert(data.error || 'Checkout initialization failed');
-                setLoadingPlan(null);
-            }
-        } catch (error) {
-            console.error('Checkout error', error);
-            alert('A network error occurred');
-            setLoadingPlan(null);
-        }
-    };
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || 'Checkout initialization failed.');
+      }
 
-    return (
-        <div className="min-h-screen pt-32 pb-24 relative overflow-hidden grid-bg">
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none" />
+      window.location.assign(data.url);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Something went wrong.');
+      setLoadingPlan(null);
+    }
+  };
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-medium text-sm mb-6 uppercase tracking-widest"
-                    >
-                        <Sparkles className="w-4 h-4" /> Transparent Pricing
-                    </motion.div>
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight"
-                    >
-                        Invest in Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Future</span>
-                    </motion.h1>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-lg text-slate-400"
-                    >
-                        Choose the plan that fits your learning journey. Upgrade anytime, cancel whenever you want. Fast-track your A/L results today.
-                    </motion.p>
-                </div>
+  return (
+    <div className="relative min-h-screen overflow-hidden pb-24 pt-32 grid-bg">
+      <div className="pointer-events-none absolute left-1/2 top-1/4 h-[400px] w-full max-w-4xl -translate-x-1/2 rounded-full bg-indigo-500/20 blur-[120px]" />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-                    {Object.entries(PLANS).map(([key, plan], i) => {
-                        const isCurrentPlan = user && ((user as any)?.plan || 'free') === key;
-
-                        return (
-                            <motion.div
-                                key={key}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 * i }}
-                                className={`p-6 sm:p-8 rounded-3xl relative overflow-hidden backdrop-blur-sm h-full flex flex-col ${key === 'premium'
-                                    ? 'bg-gradient-to-b from-indigo-500/10 to-[#0b101a] border-2 border-indigo-500 shadow-[0_0_40px_rgba(99,102,241,0.2)] lg:-translate-y-4'
-                                    : 'bg-[#0b101a] border border-white/10'
-                                    }`}
-                            >
-                                {key === 'premium' && (
-                                    <div className="absolute top-0 left-0 right-0 bg-indigo-500 text-white text-xs font-bold uppercase tracking-widest text-center py-1.5">
-                                        Most Popular
-                                    </div>
-                                )}
-                                <div className={`mb-8 ${key === 'premium' ? 'pt-4' : ''}`}>
-                                    <h3 className="text-2xl font-bold text-white mb-2 capitalize">{plan.name}</h3>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl sm:text-4xl font-black text-white">Rs {plan.price.toLocaleString()}</span>
-                                        {key !== 'free' && <span className="text-slate-500 font-medium">/mo</span>}
-                                    </div>
-                                </div>
-
-                                <ul className="space-y-4 mb-8 flex-grow">
-                                    {plan.features.map((feature, j) => (
-                                        <li key={j} className="flex items-start gap-3 text-slate-300 text-sm sm:text-base">
-                                            <div className="mt-1 shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                                <Check className="w-3 h-3 text-emerald-400" strokeWidth={3} />
-                                            </div>
-                                            <span>{feature}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <div className="mt-auto">
-                                    <button
-                                        onClick={() => handleCheckout(key)}
-                                        disabled={loadingPlan !== null || !!isCurrentPlan}
-                                        className={`w-full py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${isCurrentPlan
-                                            ? 'bg-white/5 border border-white/10 text-slate-400 cursor-not-allowed'
-                                            : key === 'premium'
-                                                ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/25'
-                                                : 'bg-white/10 hover:bg-white/20 text-white'
-                                            }`}
-                                    >
-                                        {loadingPlan === key
-                                            ? 'Opening Checkout...'
-                                            : isCurrentPlan
-                                                ? 'Current Plan'
-                                                : key === 'free' && !user
-                                                    ? 'Sign Up Free'
-                                                    : 'Get Started'}
-                                    </button>
-                                    {!isCurrentPlan && (
-                                        <p className="text-[10px] text-center text-slate-500 mt-3 uppercase tracking-wider font-medium">Cancel anytime. No hidden fees.</p>
-                                    )}
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </div>
-
-                {/* FAQ Snippet */}
-                <div className="mt-24 max-w-3xl mx-auto space-y-6">
-                    <h2 className="text-2xl font-bold text-white text-center mb-8 inline-flex items-center justify-center gap-3 w-full">
-                        <HelpCircle className="w-6 h-6 text-indigo-400" /> FAQ
-                    </h2>
-
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                        <h4 className="text-white font-bold mb-2">Can I pay via Bank Transfer instead of a Credit Card?</h4>
-                        <p className="text-slate-400 text-sm">Presently, we support Credit/Debit cards through our ultra-secure Stripe gateway. Bank transfers are planned for Phase 3 rollout specifically for Sri Lankan resident bank accounts.</p>
-                    </div>
-
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                        <h4 className="text-white font-bold mb-2">Will the AI Tutor give me direct answers to exam questions?</h4>
-                        <p className="text-slate-400 text-sm">No. Our AI is configured to use the Socratic method, meaning it guides you step-by-step toward the answer so you drastically improve your actual exam performance instead of just memorizing solutions.</p>
-                    </div>
-                </div>
-
-            </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-2 text-sm font-medium uppercase tracking-widest text-indigo-400"
+          >
+            <Sparkles className="h-4 w-4" /> Transparent pricing
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-6 text-4xl font-black tracking-tight text-white md:text-6xl"
+          >
+            Pick the Plan That Matches Your Study Pace
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg text-slate-400"
+          >
+            Start free, upgrade whenever you need more support, and keep the tools that actually help you study better.
+          </motion.p>
         </div>
-    );
+
+        {checkoutError ? (
+          <div className="mx-auto mb-8 max-w-3xl rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-100">
+            <p>{checkoutError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (lastAttemptedPlan) {
+                  void handleCheckout(lastAttemptedPlan);
+                  return;
+                }
+
+                setCheckoutError(null);
+              }}
+              className="mt-3 rounded-lg bg-white/10 px-3 py-2 font-medium text-white hover:bg-white/15"
+            >
+              Try again
+            </button>
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {Object.entries(plans).map(([key, plan], index) => {
+            const isCurrentPlan = currentPlan === key;
+            const isFeatured = key === 'premium';
+
+            return (
+              <motion.div
+                key={key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+                className={`relative flex h-full flex-col overflow-hidden rounded-3xl p-6 sm:p-8 backdrop-blur-sm ${
+                  isFeatured
+                    ? 'border-2 border-indigo-500 bg-gradient-to-b from-indigo-500/10 to-[#0b101a] shadow-[0_0_40px_rgba(99,102,241,0.2)] lg:-translate-y-4'
+                    : 'border border-white/10 bg-[#0b101a]'
+                }`}
+              >
+                {isFeatured ? (
+                  <div className="absolute inset-x-0 top-0 bg-indigo-500 py-1.5 text-center text-xs font-bold uppercase tracking-widest text-white">
+                    Most Popular
+                  </div>
+                ) : null}
+
+                <div className={`mb-8 ${isFeatured ? 'pt-4' : ''}`}>
+                  <h3 className="mb-2 text-2xl font-bold text-white">{plan.name}</h3>
+                  <p className="mb-4 text-sm text-slate-400">{plan.subtitle}</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-white sm:text-4xl">Rs {plan.price.toLocaleString()}</span>
+                    {key !== 'free' ? <span className="font-medium text-slate-500">/mo</span> : null}
+                  </div>
+                </div>
+
+                <ul className="mb-8 flex-grow space-y-4">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3 text-sm text-slate-300 sm:text-base">
+                      <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20">
+                        <Check className="h-3 w-3 text-emerald-400" strokeWidth={3} />
+                      </div>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleCheckout(key as keyof typeof plans)}
+                  disabled={loadingPlan !== null || isCurrentPlan}
+                  className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold shadow-lg transition-all ${
+                    isCurrentPlan
+                      ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-400'
+                      : isFeatured
+                        ? 'bg-indigo-500 text-white shadow-indigo-500/25 hover:bg-indigo-600'
+                        : 'bg-white/10 text-white hover:bg-white/20'
+                  }`}
+                >
+                  {loadingPlan === key
+                    ? 'Opening Checkout...'
+                    : isCurrentPlan
+                      ? 'Current Plan'
+                      : !user
+                        ? key === 'free'
+                          ? 'Sign Up Free'
+                          : `Choose ${plan.name}`
+                        : 'Upgrade Now'}
+                </button>
+
+                {!isCurrentPlan ? (
+                  <p className="mt-3 text-center text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    Cancel anytime. No hidden fees.
+                  </p>
+                ) : null}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <section className="mt-24">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-black text-white">Feature comparison</h2>
+            <p className="mt-3 text-slate-400">A clearer side-by-side view of what opens up at each plan level.</p>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0b101a]">
+            <div className="grid grid-cols-[1.4fr_repeat(4,minmax(0,1fr))] gap-px bg-white/10 text-sm">
+              <div className="bg-[#111827] p-4 font-semibold text-white">Feature</div>
+              {['Free', 'Basic', 'Premium', 'Elite'].map((column) => (
+                <div key={column} className="bg-[#111827] p-4 text-center font-semibold text-white">
+                  {column}
+                </div>
+              ))}
+
+              {comparisonRows.map((row) => (
+                <PricingRow key={row[0]} row={row} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto mt-24 max-w-3xl space-y-6">
+          <h2 className="mb-8 inline-flex w-full items-center justify-center gap-3 text-center text-2xl font-bold text-white">
+            <HelpCircle className="h-6 w-6 text-indigo-400" /> FAQ
+          </h2>
+
+          {faqs.map((faq) => (
+            <div key={faq.question} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <h4 className="mb-2 font-bold text-white">{faq.question}</h4>
+              <p className="text-sm text-slate-400">{faq.answer}</p>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function PricingRow({ row }: { row: string[] }) {
+  return (
+    <>
+      {row.map((cell, index) => (
+        <div
+          key={`${row[0]}-${index}`}
+          className={`bg-[#0b101a] p-4 text-sm ${
+            index === 0 ? 'font-medium text-white' : 'text-center text-slate-300'
+          }`}
+        >
+          {cell}
+        </div>
+      ))}
+    </>
+  );
 }

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock, Trophy, Star, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, Trophy, Zap } from 'lucide-react';
 import { SUBJECTS, SYLLABUS } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 
@@ -150,10 +150,7 @@ export default function SubjectsPageClient() {
                                             {/* CTA Row */}
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-1.5 text-sm text-slate-400">
-                                                    {[...Array(5)].map((_, j) => (
-                                                        <Star key={j} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                                                    ))}
-                                                    <span className="ml-1">4.9 · 400+ students</span>
+                                                    <span>First 2 units available free</span>
                                                 </div>
 
                                                 <div

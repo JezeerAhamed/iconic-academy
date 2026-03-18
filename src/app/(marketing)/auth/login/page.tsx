@@ -26,8 +26,8 @@ export default function LoginPage() {
             await signInWithEmail(email, password);
             toast.success('Welcome back!');
             // Router.push is handled inside AuthContext.signInWithEmail → /dashboard
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to sign in');
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to sign in');
         } finally {
             setIsLoading(false);
         }
@@ -39,8 +39,8 @@ export default function LoginPage() {
             await signInWithGoogle();
             toast.success('Welcome back!');
             // Router.push is handled inside AuthContext.signInWithGoogle → /dashboard
-        } catch (error: any) {
-            toast.error(error.message || 'Google sign-in failed. Please try again.');
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Google sign-in failed. Please try again.');
         } finally {
             setGoogleLoading(false);
         }

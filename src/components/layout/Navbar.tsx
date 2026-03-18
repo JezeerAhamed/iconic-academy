@@ -69,8 +69,6 @@ export default function Navbar() {
                             </Link>
                         ))}
                     </nav>
-
-    // CTA Buttons
                     <div className="hidden md:flex items-center gap-3">
                         {user ? (
                             <div className="flex items-center gap-4">
