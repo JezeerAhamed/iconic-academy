@@ -68,7 +68,10 @@ function AITutorContent() {
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(profile?.uid ? { 'x-user-id': profile.uid } : {}),
+                },
                 body: JSON.stringify({
                     messages: [...messages, { role: 'user', content: userMessage }],
                     context: contextParam,
