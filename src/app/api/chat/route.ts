@@ -16,23 +16,28 @@ export async function POST(req: Request) {
             });
         }
 
-        const userId = req.headers.get('x-user-id'); // Read from custom header if passed from client
+        // Usage tracking — non-blocking. If Admin SDK isn't configured, skip gracefully.
+        const userId = req.headers.get('x-user-id');
         if (userId) {
-            const userDoc = await adminDb.collection('users').doc(userId).get();
-            const plan = userDoc.data()?.plan || 'free';
-            if (plan === 'free') {
-                const today = new Date().toISOString().split('T')[0];
-                const trackRef = adminDb.collection('usage').doc(`${userId}_${today}`);
-                const trackDoc = await trackRef.get();
-                const count = trackDoc.exists ? (trackDoc.data()?.chatCount || 0) : 0;
-
-                if (count >= 10) {
-                    return NextResponse.json({
-                        role: 'assistant',
-                        content: `**Daily Limit Reached! 🛑**\n\nYou've used your 10 free AI Tutor messages for today. \n\nUpgrade to the **Basic** plan for unlimited, personalized AI tutoring on every problem!`
-                    });
+            try {
+                const userDoc = await adminDb.collection('users').doc(userId).get();
+                const plan = userDoc.data()?.plan || 'free';
+                if (plan === 'free') {
+                    const today = new Date().toISOString().split('T')[0];
+                    const trackRef = adminDb.collection('usage').doc(`${userId}_${today}`);
+                    const trackDoc = await trackRef.get();
+                    const count = trackDoc.exists ? (trackDoc.data()?.chatCount || 0) : 0;
+                    if (count >= 10) {
+                        return NextResponse.json({
+                            role: 'assistant',
+                            content: `**Daily Limit Reached! 🛑**\n\nYou've used your 10 free AI Tutor messages for today.\n\nUpgrade to **Basic** for unlimited AI tutoring!`
+                        });
+                    }
+                    await trackRef.set({ chatCount: count + 1 }, { merge: true });
                 }
-                await trackRef.set({ chatCount: count + 1 }, { merge: true });
+            } catch (usageErr) {
+                // Usage tracking failed (e.g. Admin SDK not configured) — continue without blocking
+                console.warn('[chat] Usage tracking skipped:', (usageErr as Error).message);
             }
         }
 
