@@ -1,0 +1,7 @@
+src/app/dashboard/page.tsx(154,30): error TS2304: Cannot find name 'BookOpen'.
+src/app/dashboard/page.tsx(158,34): error TS2304: Cannot find name 'Button'.
+src/app/dashboard/page.tsx(160,35): error TS2304: Cannot find name 'Button'.
+src/app/dashboard/subjects/[subjectId]/page.tsx(73,81): error TS2339: Property 'topics' does not exist on type '{ id: string; title: string; description: string; }'.
+src/app/dashboard/subjects/[subjectId]/page.tsx(80,35): error TS2339: Property 'topics' does not exist on type '{ id: string; title: string; description: string; }'.
+src/app/dashboard/subjects/[subjectId]/page.tsx(80,47): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+src/app/dashboard/subjects/[subjectId]/page.tsx(80,54): error TS7006: Parameter 'j' implicitly has an 'any' type.
