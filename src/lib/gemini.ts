@@ -29,7 +29,7 @@ STYLE:
 
 // Default model instance customized for Iconic Academy
 export const geminiModel = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-1.5-flash',
     systemInstruction: ICONIC_SYSTEM_PROMPT
 });
 
