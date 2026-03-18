@@ -2,6 +2,8 @@ import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
+export const dynamic = 'force-dynamic';
+
 const stripeApiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_for_build';
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder';
 

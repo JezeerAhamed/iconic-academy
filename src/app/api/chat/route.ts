@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { geminiModel, safeGeminiCall } from '@/lib/gemini';
 import { adminDb } from '@/lib/firebase-admin';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic'; // Required: uses Firebase Admin SDK (Node.js only)
 
 export async function POST(req: Request) {
     try {
