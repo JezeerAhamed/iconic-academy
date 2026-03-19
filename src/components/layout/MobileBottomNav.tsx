@@ -27,7 +27,7 @@ export default function MobileBottomNav() {
     if (!user || !pathname.startsWith('/dashboard')) return null;
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-cgray-200 flex md:hidden z-50 safe-area-bottom">
+        <nav aria-label="Dashboard mobile navigation" className="fixed bottom-0 left-0 right-0 bg-white border-t border-cgray-200 flex md:hidden z-50 safe-area-bottom">
             <div className="flex items-center justify-around w-full">
                 {TABS.map((tab) => {
                     const isActive = tab.href === '/dashboard'

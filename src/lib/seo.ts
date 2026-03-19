@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CONTACT } from './contact';
 import type { SubjectId } from './types';
 
 export const SITE_URL = 'https://iconicacademy.lk';
@@ -259,8 +260,8 @@ export function getHomepageJsonLd() {
           {
             '@type': 'ContactPoint',
             contactType: 'customer support',
-            telephone: '+94771041815',
-            email: 'jezeerahamed254@gmail.com',
+            telephone: CONTACT.whatsapp,
+            email: CONTACT.email,
             areaServed: 'LK',
             availableLanguage: ['en', 'ta'],
           },

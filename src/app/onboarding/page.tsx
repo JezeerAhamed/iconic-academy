@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -129,7 +130,7 @@ export default function OnboardingPage() {
                                                     <Check className="h-3 w-3" strokeWidth={3} />
                                                 </div>
                                             ) : null}
-                                            <div className="mb-3 text-4xl">{subject.icon}</div>
+                                            <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="mb-3 text-4xl" />
                                             <h3 className="mb-1 text-lg font-bold text-cgray-900">
                                                 {subject.name}
                                             </h3>

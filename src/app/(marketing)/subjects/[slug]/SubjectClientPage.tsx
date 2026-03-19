@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -381,7 +382,7 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
   return (
     <>
       <div className="min-h-screen bg-white pt-16 pb-20">
-        <nav className="c-container py-4 flex flex-wrap items-center gap-2 text-sm text-cgray-500">
+        <nav aria-label="Breadcrumb" className="c-container py-4 flex flex-wrap items-center gap-2 text-sm text-cgray-600">
           <Link href="/" className="hover:text-cblue-500 hover:no-underline">Home</Link>
           <span>&gt;</span>
           <Link href="/subjects" className="hover:text-cblue-500 hover:no-underline">Subjects</Link>
@@ -398,7 +399,7 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                   className="flex h-16 w-16 items-center justify-center rounded-xl text-3xl flex-shrink-0"
                   style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
                 >
-                  {subject.icon}
+                  <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="text-3xl" />
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-3xl md:text-4xl font-bold text-cgray-900 mb-3">{subject.name}</h1>
@@ -456,6 +457,8 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                 <button
                   type="button"
                   onClick={() => handleUnitToggle(unit, index)}
+                  aria-expanded={isExpanded}
+                  aria-controls={`subject-unit-panel-${unit.id}`}
                   className="w-full text-left"
                 >
                   <div className="flex items-center justify-between p-4 gap-4">
@@ -465,7 +468,7 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                       </div>
                       <div className="min-w-0">
                         <p className="text-base font-semibold text-cgray-900 truncate">{unit.title}</p>
-                        <p className="text-sm text-cgray-500 truncate">{unit.description}</p>
+                        <p className="text-sm text-cgray-600 truncate">{unit.description}</p>
                       </div>
                     </div>
 
@@ -480,7 +483,7 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                       ) : (
                         <span className="c-badge-gray mr-2">Unlocked</span>
                       )}
-                      <ChevronDown className={`w-4 h-4 text-cgray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown aria-hidden="true" className={`w-4 h-4 text-cgray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
 
@@ -495,7 +498,7 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                 </button>
 
                 {isExpanded ? (
-                  <div className="border-t border-cgray-100 px-4 py-3">
+                  <div id={`subject-unit-panel-${unit.id}`} aria-hidden={!isExpanded} className="border-t border-cgray-100 px-4 py-3">
                     <div className="flex flex-col gap-1">
                       {unit.lessons.map((lesson) => {
                         const masteryClass = getMasteryIndicator(progressByLesson[lesson.id] ?? 'not_started');
@@ -507,7 +510,7 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                           >
                             <span className={masteryClass} />
                             <span className="text-sm text-cgray-700 flex-1">{lesson.title}</span>
-                            <span className="text-xs text-cgray-400">{lesson.durationMinutes} min</span>
+                            <span className="text-xs text-cgray-600">{lesson.durationMinutes} min</span>
                           </div>
                         );
                       })}

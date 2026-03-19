@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -14,7 +15,6 @@ import {
     BrainCircuit,
     Trophy,
     BarChart3,
-    ShieldAlert,
     Settings,
     LogOut,
     Flame,
@@ -66,9 +66,9 @@ export default function Sidebar() {
     const nextLevelXP = level * 1000;
     const xpInLevel = userXP % 1000;
     const xpPercent = (xpInLevel / 1000) * 100;
-    const navItems = profile?.isAdmin
-        ? [...BASE_NAV_ITEMS, { name: 'Admin', href: '/admin', icon: ShieldAlert }]
-        : BASE_NAV_ITEMS;
+    // Admin is intentionally unlinked from learner navigation.
+    // Access is only via direct URL plus middleware/admin checks.
+    const navItems = BASE_NAV_ITEMS;
 
     const enrolledSubjects = SUBJECTS.filter((subject) => (profile?.enrolledSubjects ?? []).includes(subject.id));
     const streakCalendar = gamData.streakDays.length === 7
@@ -102,7 +102,7 @@ export default function Sidebar() {
                 </div>
             </div>
 
-            <nav className="flex-1 py-2">
+            <nav aria-label="Dashboard navigation" className="flex-1 py-2">
                 <p className="px-4 pt-4 pb-1 text-xs font-semibold text-cgray-400 uppercase tracking-wider">Learning</p>
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
@@ -134,7 +134,7 @@ export default function Sidebar() {
                                     href={`/dashboard/subjects/${subject.id}`}
                                     className="inline-flex items-center gap-1 rounded-full border border-cgray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-cgray-700 transition-colors hover:bg-cgray-50"
                                 >
-                                    <span>{subject.icon}</span>
+                                    <EmojiIcon emoji={subject.icon} label={subject.name} decorative />
                                     <span>{subject.name}</span>
                                 </Link>
                             ))}

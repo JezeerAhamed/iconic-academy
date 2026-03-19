@@ -21,7 +21,7 @@ function DashboardLayoutSkeleton() {
                 </div>
             </div>
 
-            <main className="flex-1 md:ml-60">
+            <div className="flex-1 md:ml-60">
                 <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
                     <div className="h-4 w-36 animate-pulse rounded bg-cgray-100" />
                     <div className="rounded-lg border border-cgray-200 bg-white p-6 shadow-card">
@@ -38,7 +38,7 @@ function DashboardLayoutSkeleton() {
                         <div className="h-72 animate-pulse rounded-lg border border-cgray-200 bg-white shadow-card" />
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }
@@ -67,12 +67,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex min-h-screen bg-white">
             <Sidebar />
 
-            <main className="flex-1 md:ml-60 min-h-screen">
+            <div className="flex-1 md:ml-60 min-h-screen">
                 <div className="mx-auto max-w-5xl px-6 py-8 pb-24 md:pb-8">
                     <Breadcrumbs />
                     {children}
                 </div>
-            </main>
+            </div>
 
             <MobileBottomNav />
         </div>

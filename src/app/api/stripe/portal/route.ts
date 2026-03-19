@@ -1,36 +1,35 @@
 import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { serverEnv } from '@/lib/env';
+import { sanitiseInput } from '@/lib/sanitise';
+import { withSecurity } from '@/lib/with-security';
 
 export const dynamic = 'force-dynamic';
 
-const stripeApiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_for_build';
-const stripe = new Stripe(stripeApiKey, { apiVersion: '2023-10-16' as any });
+const stripe = new Stripe(serverEnv.stripeSecretKey, {
+  apiVersion: '2023-10-16' as never,
+});
 
-export async function POST(req: NextRequest) {
-    try {
-        const { userId } = await req.json();
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-        }
+export const POST = withSecurity(async (request: NextRequest) => {
+  const body = (await request.json()) as { userId?: string };
+  const userId = sanitiseInput(body.userId || '', { maxLength: 128, stripHtml: false });
 
-        const subDoc = await adminDb.collection('subscriptions').doc(userId).get();
-        const customerId = subDoc.data()?.stripeCustomerId;
+  if (!userId) {
+    return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+  }
 
-        if (!customerId) {
-            return NextResponse.json({ error: 'No Stripe Customer found for user' }, { status: 404 });
-        }
+  const subDoc = await adminDb.collection('subscriptions').doc(userId).get();
+  const customerId = sanitiseInput(String(subDoc.data()?.stripeCustomerId || ''), { maxLength: 128, stripHtml: false });
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const portalSession = await stripe.billingPortal.sessions.create({
-            customer: customerId,
-            return_url: `${baseUrl}/dashboard/billing`,
-        });
+  if (!customerId) {
+    return NextResponse.json({ error: 'No Stripe customer found for user.' }, { status: 404 });
+  }
 
-        return NextResponse.json({ url: portalSession.url });
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${serverEnv.appUrl}/dashboard/billing`,
+  });
 
-    } catch (error: any) {
-        console.error('Stripe Portal Error:', error);
-        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
-    }
-}
+  return NextResponse.json({ url: portalSession.url });
+});

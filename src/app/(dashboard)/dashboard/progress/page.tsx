@@ -20,6 +20,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { formatDuration } from '@/lib/dashboard-intelligence';
@@ -267,13 +268,11 @@ export default function ProgressAnalyticsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xl" aria-hidden="true">
-                      {subject.icon}
-                    </span>
+                    <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="text-xl" />
                     <h3 className="text-lg font-semibold text-cgray-900">{subject.name}</h3>
                   </div>
-                  <p className="mt-2 text-sm text-cgray-500">
-                    {subject.averageAccuracy}% accuracy · {subject.completedLessons}/{subject.totalLessons} lessons completed
+                  <p className="mt-2 text-sm text-cgray-600">
+                    {subject.averageAccuracy}% accuracy - {subject.completedLessons}/{subject.totalLessons} lessons completed
                   </p>
                 </div>
                 <span className="rounded-full border border-cgray-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cgray-500">

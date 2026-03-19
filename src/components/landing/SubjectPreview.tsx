@@ -1,5 +1,6 @@
 'use client';
 
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Link from 'next/link';
@@ -42,6 +43,7 @@ export default function SubjectPreview() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SUBJECTS.map((subject, index) => {
             const units = SYLLABUS[subject.id as keyof typeof SYLLABUS] || [];
+            const titleId = `homepage-subject-${subject.id}`;
 
             return (
               <motion.div
@@ -51,22 +53,26 @@ export default function SubjectPreview() {
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="h-full"
               >
-                <Link href={`/subjects/${subject.id}`} className="block h-full hover:no-underline">
+                <Link
+                  href={`/subjects/${subject.id}`}
+                  aria-labelledby={titleId}
+                  className="block h-full rounded-lg focus-visible:ring-2 focus-visible:ring-cblue-500 focus-visible:ring-offset-2 hover:no-underline"
+                >
                   <div className="c-card group flex h-full cursor-pointer flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
                     <div className={getSubjectBarClass(subject.id)} />
 
                     <div className="flex flex-1 flex-col p-4">
-                      <div className="mb-2 text-2xl">{subject.icon}</div>
+                      <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="mb-2 text-2xl" />
 
-                      <h3 className="mb-1 text-base font-semibold leading-snug text-cgray-900 transition-colors group-hover:text-cblue-500">
+                      <h3 id={titleId} className="mb-1 text-base font-semibold leading-snug text-cgray-900 transition-colors group-hover:text-cblue-500">
                         {subject.name}
                       </h3>
 
-                      <p className="mb-3 flex-1 text-sm leading-relaxed text-cgray-500">
+                      <p className="mb-3 flex-1 text-sm leading-relaxed text-cgray-600">
                         {subject.description}
                       </p>
 
-                      <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-cgray-500">
+                      <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-cgray-600">
                         <div className="flex items-center gap-1">
                           <span>{subject.unitCount} Units</span>
                         </div>
@@ -93,7 +99,7 @@ export default function SubjectPreview() {
                       </div>
 
                       <div className="flex items-center justify-between border-t border-cgray-100 pt-3">
-                        <div className="flex items-center gap-1 text-xs text-cgray-500">
+                        <div className="flex items-center gap-1 text-xs text-cgray-600">
                           <span>Start for free</span>
                         </div>
                         <div className="flex items-center gap-1 text-sm font-semibold text-cblue-500 transition-colors hover:text-cblue-600">

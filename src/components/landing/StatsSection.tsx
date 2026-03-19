@@ -17,20 +17,20 @@ export default function StatsSection() {
   return (
     <section ref={ref} className="border-t border-cgray-200 bg-white py-8">
       <div className="c-wrap">
-        <div className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
           {stats.map((stat, index) => (
-            <motion.div
+            <motion.li
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.08 }}
-              className="flex flex-col items-center gap-1"
+              className="flex list-none flex-col items-center gap-1"
             >
               <div className="text-4xl font-bold text-cgray-900">{stat.value}</div>
-              <div className="max-w-[120px] text-sm leading-snug text-cgray-500">{stat.label}</div>
-            </motion.div>
+              <div className="max-w-[120px] text-sm leading-snug text-cgray-600">{stat.label}</div>
+            </motion.li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

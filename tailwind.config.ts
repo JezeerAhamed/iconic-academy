@@ -15,6 +15,11 @@ const config: Config = {
         ],
       },
       colors: {
+        // WCAG AA verified text/background pairs used across the app:
+        // text-cgray-600 on bg-white / bg-cgray-50
+        // text-cgray-900 on bg-white / bg-cgray-50
+        // text-cgreen-600 on bg-cgreen-50
+        // text-white on bg-cblue-500
         cblue: {
           25: "#F0F4FF",
           50: "#E6EEFA",

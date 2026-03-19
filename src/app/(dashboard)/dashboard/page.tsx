@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -488,8 +489,8 @@ export default function DashboardOverview() {
           >
             <stat.icon className={`mb-2 h-5 w-5 ${stat.label === 'Streak' ? 'text-orange-500' : 'text-cblue-500'}`} />
             <p className="text-2xl font-bold text-cgray-900">{stat.value}</p>
-            <p className="mt-0.5 text-sm text-cgray-500">{stat.label}</p>
-            <p className="mt-2 text-xs text-cgray-500">{stat.detail}</p>
+            <p className="mt-0.5 text-sm text-cgray-600">{stat.label}</p>
+            <p className="mt-2 text-xs text-cgray-600">{stat.detail}</p>
           </div>
         ))}
       </div>
@@ -499,7 +500,7 @@ export default function DashboardOverview() {
         <div className="flex-1">
           <p className="text-xs font-semibold text-cblue-500 uppercase tracking-wider">Continue Learning</p>
           <p className="mt-0.5 text-base font-semibold text-cgray-900">{dashboardState.continueTitle}</p>
-          <p className="text-sm text-cgray-500">{dashboardState.continueSubtitle}</p>
+          <p className="text-sm text-cgray-600">{dashboardState.continueSubtitle}</p>
         </div>
         <Link href={dashboardState.continueHref}>
           <Button className="btn-primary btn-sm h-auto border-0 shadow-none flex-shrink-0">
@@ -579,7 +580,7 @@ export default function DashboardOverview() {
                     className="flex h-11 w-11 items-center justify-center rounded-lg text-2xl"
                     style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
                   >
-                    {subject.icon}
+                    <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="text-2xl" />
                   </div>
                   <h3 className="text-base font-semibold text-cgray-900">{subject.name}</h3>
                 </div>
@@ -591,7 +592,7 @@ export default function DashboardOverview() {
                   />
                 </div>
 
-                <div className="flex justify-between text-xs text-cgray-500">
+                <div className="flex justify-between text-xs text-cgray-600">
                   <span>{subject.completedLessons}/{subject.totalLessons} lessons</span>
                   <span>{subject.completionPercent}%</span>
                 </div>
@@ -616,7 +617,7 @@ export default function DashboardOverview() {
                 <action.icon className="h-5 w-5 text-cblue-500" />
               </div>
               <h3 className="text-base font-semibold text-cgray-900">{action.title}</h3>
-              <p className="text-sm text-cgray-500 mt-1">{action.description}</p>
+              <p className="text-sm text-cgray-600 mt-1">{action.description}</p>
             </Link>
           ))}
         </div>

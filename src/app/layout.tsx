@@ -3,6 +3,7 @@ import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "@/components/Providers";
+import RouteFocusManager from "@/components/accessibility/RouteFocusManager";
 import TopNavbar from "@/components/layout/TopNavbar";
 import { baseMetadata } from "@/lib/seo";
 
@@ -30,9 +31,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={sourceSans.variable} suppressHydrationWarning>
       <body className={`${sourceSans.className} antialiased`}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <Providers>
           <TopNavbar />
-          <main className="min-h-screen bg-white">{children}</main>
+          <main id="main-content" tabIndex={-1} className="min-h-screen bg-white">
+            <RouteFocusManager />
+            {children}
+          </main>
           <Toaster
             position="top-right"
             toastOptions={{

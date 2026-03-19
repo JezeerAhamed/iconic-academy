@@ -10,6 +10,7 @@ import PaymentTrustBadges from '@/components/conversion/PaymentTrustBadges';
 import PricingFaqAccordion, { PricingFaqItem } from '@/components/conversion/PricingFaqAccordion';
 import PricingUrgencyBanner from '@/components/conversion/PricingUrgencyBanner';
 import WhatsAppFloatingButton from '@/components/conversion/WhatsAppFloatingButton';
+import { getSecureJsonHeaders } from '@/lib/client-security';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
 const BILLING_STORAGE_KEY = 'iconic-pricing-billing-period';
@@ -179,12 +180,13 @@ export default function PricingPage() {
     try {
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getSecureJsonHeaders(),
         body: JSON.stringify({
           priceId,
           userId: user.uid,
           userEmail: user.email,
         }),
+        credentials: 'same-origin',
       });
 
       const data = (await response.json()) as { url?: string; error?: string };
@@ -242,7 +244,7 @@ export default function PricingPage() {
           </div>
 
           {billingPeriod === 'annual' && !annualCheckoutConfigured ? (
-            <p className="mt-4 text-sm text-cgray-500 dark:text-slate-400">
+            <p className="mt-4 text-sm text-cgray-600 dark:text-slate-400">
               Annual pricing is live in the UI. If yearly Stripe checkout is not ready yet, WhatsApp us and we will activate it manually.
             </p>
           ) : null}
@@ -251,7 +253,7 @@ export default function PricingPage() {
 
       <div className="c-container py-16">
         {checkoutError ? (
-          <div className="mx-auto mb-8 max-w-3xl rounded border border-cred-500/20 bg-cred-50 p-4 text-sm text-cred-500 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
+          <div role="alert" className="mx-auto mb-8 max-w-3xl rounded border border-cred-500/20 bg-cred-50 p-4 text-sm text-cred-500 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-200">
             <p>{checkoutError}</p>
             <button
               type="button"
@@ -279,11 +281,12 @@ export default function PricingPage() {
             const annualTotal = isFreePlan ? 0 : getAnnualTotal(plan.price);
 
             return (
-              <motion.div
+              <motion.article
                 key={key}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * index }}
+                aria-labelledby={`${key}-plan-title`}
                 className={
                   isFeatured
                     ? 'relative flex flex-col gap-4 rounded border-2 border-cblue-500 bg-white p-6 shadow-card-hover dark:bg-slate-900'
@@ -297,10 +300,10 @@ export default function PricingPage() {
                 ) : null}
 
                 <div className={isFeatured ? 'pt-4' : ''}>
-                  <p className="text-sm font-semibold uppercase tracking-wider text-cgray-500 dark:text-slate-400">
+                  <p id={`${key}-plan-title`} className="text-sm font-semibold uppercase tracking-wider text-cgray-600 dark:text-slate-300">
                     {plan.name}
                   </p>
-                  <p className="mt-1 text-sm text-cgray-500 dark:text-slate-400">{plan.subtitle}</p>
+                  <p className="mt-1 text-sm text-cgray-600 dark:text-slate-300">{plan.subtitle}</p>
 
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -317,23 +320,23 @@ export default function PricingPage() {
                         </div>
                       ) : billingPeriod === 'monthly' ? (
                         <div className="flex items-baseline gap-1">
-                          <span className="text-base text-cgray-500 dark:text-slate-400">Rs</span>
+                          <span className="text-base text-cgray-600 dark:text-slate-400">Rs</span>
                           <span className="text-4xl font-bold text-cgray-900 dark:text-slate-100">
                             {formatCurrency(plan.price)}
                           </span>
-                          <span className="text-base text-cgray-500 dark:text-slate-400">/mo</span>
+                          <span className="text-base text-cgray-600 dark:text-slate-400">/mo</span>
                         </div>
                       ) : (
                         <div>
                           <div className="flex flex-wrap items-baseline gap-2">
-                            <span className="text-base text-cgray-400 line-through dark:text-slate-500">
+                            <span className="text-base text-cgray-600 line-through dark:text-slate-400">
                               Rs {formatCurrency(plan.price)}/mo
                             </span>
-                            <span className="text-base text-cgray-500 dark:text-slate-400">Rs</span>
+                            <span className="text-base text-cgray-600 dark:text-slate-300">Rs</span>
                             <span className="text-4xl font-bold text-cgray-900 dark:text-slate-100">
                               {formatCurrency(annualMonthlyEquivalent)}
                             </span>
-                            <span className="text-base text-cgray-500 dark:text-slate-400">/mo</span>
+                            <span className="text-base text-cgray-600 dark:text-slate-300">/mo</span>
                           </div>
                           <p className="mt-2 text-sm text-cgreen-600 dark:text-green-300">
                             Billed annually as Rs {formatCurrency(annualTotal)}
@@ -382,11 +385,11 @@ export default function PricingPage() {
                 </button>
 
                 {!isCurrentPlan ? (
-                  <p className="mt-3 text-center text-[10px] font-medium uppercase tracking-wider text-cgray-500 dark:text-slate-400">
+                  <p className="mt-3 text-center text-[10px] font-medium uppercase tracking-wider text-cgray-600 dark:text-slate-400">
                     {billingPeriod === 'annual' && key !== 'free' ? 'Save 17% with yearly billing.' : 'Cancel anytime. No hidden fees.'}
                   </p>
                 ) : null}
-              </motion.div>
+              </motion.article>
             );
           })}
         </div>

@@ -1,3 +1,4 @@
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import { cn } from '@/lib/utils';
 
 export default function EarlyAccessBadge({ className }: { className?: string }) {
@@ -9,7 +10,7 @@ export default function EarlyAccessBadge({ className }: { className?: string }) 
         className
       )}
     >
-      <span aria-hidden="true">🚀</span>
+      <EmojiIcon emoji="🚀" label="Now enrolling" decorative />
       <span>Now enrolling — limited spots</span>
     </span>
   );

@@ -12,6 +12,8 @@ import { ChevronRight, Clock, Sparkles, PlayCircle, BookOpen } from 'lucide-reac
 import Link from 'next/link';
 import { PracticeQuiz, Question } from '@/components/ui/PracticeQuiz';
 import { MasteryBadge } from '@/components/ui/MasteryBadge';
+import { getSecureJsonHeaders } from '@/lib/client-security';
+import { sanitiseInput } from '@/lib/sanitise';
 import { doc, updateDoc } from 'firebase/firestore';
 
 export default function LessonClientViewer({
@@ -67,8 +69,9 @@ export default function LessonClientViewer({
       try {
         const res = await fetch('/api/summarize', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: lesson.contentEn }),
+          headers: getSecureJsonHeaders(),
+          body: JSON.stringify({ text: sanitiseInput(lesson.contentEn || '', { maxLength: 12000 }) }),
+          credentials: 'same-origin',
         });
         const data = await res.json();
         if (data.summary) {

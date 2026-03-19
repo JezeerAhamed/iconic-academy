@@ -1,163 +1,266 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Lock, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { sanitiseEmail, sanitiseInput } from '@/lib/sanitise';
+
+type LoginErrors = {
+  email?: string;
+  password?: string;
+  form?: string;
+};
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [googleLoading, setGoogleLoading] = useState(false);
-    const { signInWithEmail, signInWithGoogle } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<LoginErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signInWithEmail, signInWithGoogle } = useAuth();
 
-    const handleEmailSignIn = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!email || !password) return toast.error('Please enter email and password');
+  const emailDescribedBy = useMemo(
+    () => [errors.email ? 'login-email-error' : null, errors.form ? 'login-form-error' : null].filter(Boolean).join(' ') || undefined,
+    [errors.email, errors.form]
+  );
 
-        setIsLoading(true);
-        try {
-            await signInWithEmail(email, password);
-            toast.success('Welcome back!');
-            // Router.push is handled inside AuthContext.signInWithEmail -> /dashboard
-        } catch (error: unknown) {
-            toast.error(error instanceof Error ? error.message : 'Failed to sign in');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const passwordDescribedBy = useMemo(
+    () => [errors.password ? 'login-password-error' : null, errors.form ? 'login-form-error' : null].filter(Boolean).join(' ') || undefined,
+    [errors.form, errors.password]
+  );
 
-    const handleGoogleSignIn = async () => {
-        setGoogleLoading(true);
-        try {
-            await signInWithGoogle();
-            toast.success('Welcome back!');
-            // Router.push is handled inside AuthContext.signInWithGoogle -> /dashboard
-        } catch (error: unknown) {
-            toast.error(error instanceof Error ? error.message : 'Google sign-in failed. Please try again.');
-        } finally {
-            setGoogleLoading(false);
-        }
-    };
+  const handleEmailSignIn = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-    return (
-        <div className="min-h-screen bg-cgray-50 flex flex-col items-center justify-center py-16 px-4">
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md"
+    const nextErrors: LoginErrors = {};
+
+    if (!email.trim()) {
+      nextErrors.email = 'Enter the email address you use for your account.';
+    } else {
+      try {
+        sanitiseEmail(email);
+      } catch {
+        nextErrors.email = 'Enter a valid email address.';
+      }
+    }
+
+    if (!password) {
+      nextErrors.password = 'Enter your password to continue.';
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      toast.error('Please correct the highlighted fields.');
+      return;
+    }
+
+    setErrors({});
+    setIsLoading(true);
+
+    try {
+      const safeEmail = sanitiseEmail(email);
+      const safePassword = sanitiseInput(password, { maxLength: 128, trim: false, stripHtml: false });
+      await signInWithEmail(safeEmail, safePassword);
+      toast.success('Welcome back!');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to sign in';
+      setErrors({ form: message });
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrors({});
+    setGoogleLoading(true);
+
+    try {
+      await signInWithGoogle();
+      toast.success('Welcome back!');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Google sign-in failed. Please try again.';
+      setErrors({ form: message });
+      toast.error(message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-cgray-50 flex flex-col items-center justify-center py-16 px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <div className="bg-white rounded-lg border border-cgray-200 shadow-card p-8 w-full max-w-md">
+          <div className="text-center mb-6">
+            <Link href="/" className="inline-flex flex-col items-center justify-center hover:no-underline">
+              <div className="relative h-12 w-[148px] overflow-hidden">
+                <Image
+                  src="/logo.jpg"
+                  alt="Iconic Academy logo"
+                  fill
+                  priority
+                  sizes="148px"
+                  className="object-contain"
+                />
+              </div>
+              <span className="text-2xl font-bold text-cblue-500 tracking-tight">ICONIC ACADEMY</span>
+              <span className="text-sm text-cgray-600 mt-1">Sri Lanka&apos;s A/L learning platform</span>
+            </Link>
+          </div>
+
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-cgray-900 mb-1">Welcome back</h1>
+            <p className="text-sm text-cgray-600 mb-6">Sign in to continue your learning journey</p>
+          </div>
+
+          {errors.form ? (
+            <p id="login-form-error" role="alert" className="mb-4 rounded border border-cred-500 bg-cred-50 px-3 py-2 text-sm text-cred-500">
+              {errors.form}
+            </p>
+          ) : null}
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-cgray-200 rounded bg-white text-cgray-700 font-semibold text-sm hover:bg-cgray-50 transition-colors duration-150 mb-4 h-auto shadow-none"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading || googleLoading}
+          >
+            {googleLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" aria-hidden="true">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Continue with Google</span>
+              </>
+            )}
+          </Button>
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 border-t border-cgray-200" />
+            <span className="text-xs text-cgray-600 font-medium whitespace-nowrap">OR SIGN IN WITH EMAIL</span>
+            <div className="flex-1 border-t border-cgray-200" />
+          </div>
+
+          <form onSubmit={handleEmailSignIn} className="space-y-4" noValidate>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="block text-sm font-semibold text-cgray-700 mb-1">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cgray-500" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  autoFocus
+                  placeholder="name@example.com"
+                  className="c-input h-auto pl-9"
+                  value={email}
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={emailDescribedBy}
+                  onChange={(event) => {
+                    setEmail(sanitiseInput(event.target.value, { maxLength: 320, stripHtml: false }));
+                    setErrors((current) => ({ ...current, email: undefined, form: undefined }));
+                  }}
+                  disabled={isLoading || googleLoading}
+                />
+              </div>
+              {errors.email ? (
+                <p id="login-email-error" role="alert" className="text-sm text-cred-500">
+                  {errors.email}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="block text-sm font-semibold text-cgray-700 mb-1">Password</Label>
+                <Link href="/auth/forgot-password" className="text-sm font-semibold text-cblue-500 hover:text-cblue-600 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cgray-500" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Your password"
+                  className="c-input h-auto pl-9 pr-16"
+                  value={password}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={passwordDescribedBy}
+                  onChange={(event) => {
+                    setPassword(sanitiseInput(event.target.value, { maxLength: 128, trim: false, stripHtml: false }));
+                    setErrors((current) => ({ ...current, password: undefined, form: undefined }));
+                  }}
+                  disabled={isLoading || googleLoading}
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-cgray-600 transition hover:bg-cgray-50 hover:text-cgray-900"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password ? (
+                <p id="login-password-error" role="alert" className="text-sm text-cred-500">
+                  {errors.password}
+                </p>
+              ) : null}
+            </div>
+
+            <Button
+              type="submit"
+              className="btn-primary w-full mt-2 h-auto border-0 shadow-none"
+              disabled={isLoading || googleLoading}
+              aria-busy={isLoading}
             >
-                <div className="bg-white rounded-lg border border-cgray-200 shadow-card p-8 w-full max-w-md">
-                    <div className="text-center mb-6">
-                        <Link href="/" className="inline-flex flex-col items-center justify-center hover:no-underline">
-                            <div className="relative h-12 w-[148px] overflow-hidden">
-                                <Image
-                                    src="/logo.jpg"
-                                    alt="Iconic Academy"
-                                    fill
-                                    priority
-                                    sizes="148px"
-                                    className="object-contain"
-                                />
-                            </div>
-                            <span className="text-2xl font-bold text-cblue-500 tracking-tight">ICONIC ACADEMY</span>
-                            <span className="text-sm text-cgray-500 mt-1">Sri Lanka&apos;s A/L learning platform</span>
-                        </Link>
-                    </div>
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </form>
 
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold text-cgray-900 mb-1">Welcome back</h1>
-                        <p className="text-sm text-cgray-500 mb-6">Sign in to continue your learning journey</p>
-                    </div>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-cgray-200 rounded bg-white text-cgray-700 font-semibold text-sm hover:bg-cgray-50 transition-colors duration-150 mb-4 h-auto shadow-none"
-                        onClick={handleGoogleSignIn}
-                        disabled={isLoading || googleLoading}
-                    >
-                        {googleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                            <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                        )}
-                        Continue with Google
-                    </Button>
-
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="flex-1 border-t border-cgray-200" />
-                        <span className="text-xs text-cgray-400 font-medium whitespace-nowrap">OR SIGN IN WITH EMAIL</span>
-                        <div className="flex-1 border-t border-cgray-200" />
-                    </div>
-
-                    <form onSubmit={handleEmailSignIn} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="block text-sm font-semibold text-cgray-700 mb-1">Email</Label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cgray-400" />
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="name@example.com"
-                                    className="c-input h-auto pl-9"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    disabled={isLoading || googleLoading}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="block text-sm font-semibold text-cgray-700 mb-1">Password</Label>
-                                <Link href="/auth/forgot-password" className="text-sm font-semibold text-cblue-500 hover:text-cblue-600 hover:underline float-right -mt-1 mb-4">
-                                    Forgot password?
-                                </Link>
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cgray-400" />
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    placeholder="Your password"
-                                    className="c-input h-auto pl-9"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    disabled={isLoading || googleLoading}
-                                />
-                            </div>
-                        </div>
-
-                        <Button
-                            type="submit"
-                            className="btn-primary w-full mt-2 h-auto border-0 shadow-none"
-                            disabled={isLoading || googleLoading}
-                        >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
-                        </Button>
-                    </form>
-
-                    <div className="text-center mt-5 pt-5 border-t border-cgray-100">
-                        <p className="text-sm text-cgray-600">
-                            Don&apos;t have an account?{' '}
-                            <Link href="/auth/signup" className="text-sm font-semibold text-cblue-500 hover:text-cblue-600">
-                                Sign Up Free
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-            </motion.div>
+          <div className="text-center mt-5 pt-5 border-t border-cgray-100">
+            <p className="text-sm text-cgray-600">
+              Don&apos;t have an account?{' '}
+              <Link href="/auth/signup" className="text-sm font-semibold text-cblue-500 hover:text-cblue-600">
+                Sign Up Free
+              </Link>
+            </p>
+          </div>
         </div>
-    );
+      </motion.div>
+    </div>
+  );
 }

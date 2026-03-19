@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { BrainCircuit, Loader2, MessageSquare, Sparkles } from 'lucide-react';
+import { getSecureJsonHeaders } from '@/lib/client-security';
+import { sanitiseInput } from '@/lib/sanitise';
 
 type DemoMessage = {
   role: 'user' | 'assistant';
@@ -22,6 +24,8 @@ export default function AITutorPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -42,25 +46,27 @@ export default function AITutorPage() {
   );
 
   async function askQuestion(prompt: string) {
-    if (!prompt.trim() || loading || limitReached) return;
+    const safePrompt = sanitiseInput(prompt, { maxLength: 1200 });
+    if (!safePrompt || loading || limitReached) return;
 
     setLoading(true);
     setError(null);
-    setLastPrompt(prompt);
+    setLastPrompt(safePrompt);
 
-    const nextMessages = [...messages, { role: 'user' as const, content: prompt }];
+    const nextMessages = [...messages, { role: 'user' as const, content: safePrompt }];
     setMessages(nextMessages);
     setInput('');
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getSecureJsonHeaders(),
         body: JSON.stringify({
           messages: nextMessages,
           context: 'Public AI tutor marketing demo',
           level: 'A/L Student',
         }),
+        credentials: 'same-origin',
       });
 
       if (!response.ok) {
@@ -77,11 +83,14 @@ export default function AITutorPage() {
       setUsedQuestions(newUsedCount);
       window.localStorage.setItem(STORAGE_KEY, String(newUsedCount));
       setMessages((current) => [...current, { role: 'assistant', content: data.content! }]);
+      setLiveAnnouncement(`AI tutor replied: ${data.content!.slice(0, 160)}`);
     } catch (fetchError) {
       setMessages((current) => current.slice(0, -1));
       setError(fetchError instanceof Error ? fetchError.message : 'Something went wrong.');
+      setLiveAnnouncement('The AI tutor could not answer right now.');
     } finally {
       setLoading(false);
+      inputRef.current?.focus();
     }
   }
 
@@ -141,7 +150,7 @@ export default function AITutorPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-semibold text-cgray-900">Try the AI Tutor</h2>
-                    <p className="text-sm text-cgray-500">Powered by the same tutoring system used inside the app.</p>
+                    <p className="text-sm text-cgray-600">Powered by the same tutoring system used inside the app.</p>
                   </div>
                   <span className="c-badge-blue normal-case tracking-normal">
                     Questions remaining: {questionsRemaining}
@@ -150,7 +159,17 @@ export default function AITutorPage() {
               </div>
 
               <div className="relative p-5">
-                <div className="max-h-[430px] space-y-4 overflow-y-auto rounded bg-cgray-50 p-4">
+                <div className="sr-only" aria-live="polite" aria-atomic="false">
+                  {liveAnnouncement}
+                </div>
+
+                <div
+                  role="log"
+                  aria-live="polite"
+                  aria-relevant="additions text"
+                  aria-atomic="false"
+                  className="max-h-[430px] space-y-4 overflow-y-auto rounded bg-cgray-50 p-4"
+                >
                   {messages.map((message, index) => (
                     <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div
@@ -214,8 +233,9 @@ export default function AITutorPage() {
                     className="flex flex-col gap-3 sm:flex-row"
                   >
                     <input
+                      ref={inputRef}
                       value={input}
-                      onChange={(event) => setInput(event.target.value)}
+                      onChange={(event) => setInput(sanitiseInput(event.target.value, { maxLength: 1200 }))}
                       placeholder="Type your question here..."
                       disabled={loading || limitReached}
                       className="c-input h-12 flex-1 disabled:cursor-not-allowed disabled:opacity-50"
@@ -244,7 +264,7 @@ export default function AITutorPage() {
                         <Sparkles className="h-6 w-6" />
                       </div>
                       <h3 className="text-2xl font-bold text-cgray-900">Demo limit reached</h3>
-                      <p className="mt-3 text-sm text-cgray-500">
+                      <p className="mt-3 text-sm text-cgray-600">
                         You used all 3 free public questions. Create an account to keep chatting with the
                         full ICONIC tutor.
                       </p>

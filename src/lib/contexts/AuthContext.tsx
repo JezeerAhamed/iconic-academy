@@ -13,6 +13,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { getSecureJsonHeaders } from '@/lib/client-security';
+import { sanitiseEmail, sanitiseInput } from '@/lib/sanitise';
 import { UserProfile } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -76,6 +78,33 @@ async function ensureUserDocuments(firebaseUser: FirebaseUser): Promise<UserProf
     return userSnap.data() as UserProfile;
 }
 
+type AuthSessionFlow = 'refresh' | 'login' | 'signup' | 'google';
+
+async function establishServerSession(firebaseUser: FirebaseUser, flow: AuthSessionFlow = 'refresh') {
+    const idToken = await firebaseUser.getIdToken();
+
+    const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: getSecureJsonHeaders({ 'x-auth-flow': flow }),
+        body: JSON.stringify({ idToken }),
+        credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+        throw new Error('Secure session could not be established.');
+    }
+}
+
+async function clearServerSession() {
+    await fetch('/api/auth/session', {
+        method: 'DELETE',
+        headers: getSecureJsonHeaders(),
+        credentials: 'same-origin',
+    }).catch((error) => {
+        console.warn('Failed to clear server session', error);
+    });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<FirebaseUser | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -87,12 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(firebaseUser);
             if (firebaseUser) {
                 try {
+                    await establishServerSession(firebaseUser, 'refresh');
                     const userProfile = await ensureUserDocuments(firebaseUser);
                     setProfile(userProfile);
+                    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth')) {
+                        router.replace(userProfile.onboardingComplete ? '/dashboard' : '/onboarding');
+                    }
                 } catch (err) {
                     console.error('Failed to sync user profile:', err);
                 }
             } else {
+                await clearServerSession();
                 setProfile(null);
             }
             setLoading(false);
@@ -105,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         provider.setCustomParameters({ prompt: 'select_account' });
         try {
             const result = await signInWithPopup(auth, provider);
+            await establishServerSession(result.user, 'google');
             const userProfile = await ensureUserDocuments(result.user);
             if (!userProfile.onboardingComplete) {
                 router.push('/onboarding');
@@ -124,7 +159,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signInWithEmail = async (email: string, password: string) => {
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const safeEmail = sanitiseEmail(email);
+            const safePassword = sanitiseInput(password, { maxLength: 128, trim: false, stripHtml: false });
+            const userCredential = await signInWithEmailAndPassword(auth, safeEmail, safePassword);
+            await establishServerSession(userCredential.user, 'login');
             const userProfile = await ensureUserDocuments(userCredential.user);
             if (!userProfile.onboardingComplete) {
                 router.push('/onboarding');
@@ -141,11 +179,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signUpWithEmail = async (email: string, password: string, name: string) => {
         try {
-            const result = await createUserWithEmailAndPassword(auth, email, password);
+            const safeEmail = sanitiseEmail(email);
+            const safeName = sanitiseInput(name, { maxLength: 120 });
+            const safePassword = sanitiseInput(password, { maxLength: 128, trim: false, stripHtml: false });
+            const result = await createUserWithEmailAndPassword(auth, safeEmail, safePassword);
             // Set display name immediately before creating Firestore doc
-            await updateProfile(result.user, { displayName: name });
+            await updateProfile(result.user, { displayName: safeName });
+            await establishServerSession(result.user, 'signup');
             // Create Firestore documents with the correct name
-            await ensureUserDocuments({ ...result.user, displayName: name } as FirebaseUser);
+            await ensureUserDocuments({ ...result.user, displayName: safeName } as FirebaseUser);
             router.push('/onboarding');
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') throw new Error('An account with this email already exists.');
@@ -155,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signOut = async () => {
+        await clearServerSession();
         await firebaseSignOut(auth);
         setUser(null);
         setProfile(null);

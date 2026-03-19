@@ -72,6 +72,7 @@ export default function AppNavbar() {
 
   return (
     <nav
+      aria-label="Dashboard utility navigation"
       className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 ${
         scrolled ? 'border-b border-cgray-200 bg-white shadow-nav' : 'border-b border-cgray-200 bg-white/95'
       }`}
@@ -81,7 +82,7 @@ export default function AppNavbar() {
           <div className="relative h-9 w-[132px] overflow-hidden rounded border border-cgray-200 bg-white transition-transform duration-200 group-hover:scale-[1.02]">
             <Image
               src="/logo.jpg"
-              alt="Iconic Academy"
+              alt="Iconic Academy logo"
               fill
               priority
               sizes="132px"
@@ -137,7 +138,11 @@ export default function AppNavbar() {
 
           <div className="relative" ref={dropdownRef}>
             <button
+              type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="menu"
+              aria-label="Open account menu"
               className="flex items-center gap-2 rounded px-1 py-1 transition-all hover:bg-cgray-50"
             >
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-cblue-500 text-sm font-bold text-white">
@@ -183,6 +188,7 @@ export default function AppNavbar() {
 
                 <div className="border-t border-cgray-200 py-1">
                   <button
+                    type="button"
                     onClick={() => {
                       setDropdownOpen(false);
                       signOut();

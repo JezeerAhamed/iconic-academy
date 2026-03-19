@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface PricingFaqItem {
@@ -10,6 +10,12 @@ export interface PricingFaqItem {
 
 export default function PricingFaqAccordion({ items }: { items: PricingFaqItem[] }) {
   const [openIndex, setOpenIndex] = useState(0);
+  const triggerRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const handleClose = (index: number) => {
+    setOpenIndex(-1);
+    window.requestAnimationFrame(() => triggerRefs.current[index]?.focus());
+  };
 
   return (
     <div className="space-y-0">
@@ -21,12 +27,21 @@ export default function PricingFaqAccordion({ items }: { items: PricingFaqItem[]
         return (
           <div key={item.question} className="border-b border-cgray-200 dark:border-white/10">
             <button
+              ref={(element) => {
+                triggerRefs.current[index] = element;
+              }}
               id={buttonId}
               type="button"
               aria-expanded={isOpen}
               aria-controls={panelId}
               onClick={() => setOpenIndex(isOpen ? -1 : index)}
-              className="flex w-full items-center justify-between gap-4 py-4 text-left"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && isOpen) {
+                  event.preventDefault();
+                  handleClose(index);
+                }
+              }}
+              className="flex w-full items-center justify-between gap-4 py-4 text-left focus-visible:ring-2 focus-visible:ring-cblue-500 focus-visible:ring-offset-2"
             >
               <span className="text-base font-semibold text-cgray-900 dark:text-slate-100">
                 {item.question}
@@ -48,6 +63,7 @@ export default function PricingFaqAccordion({ items }: { items: PricingFaqItem[]
               id={panelId}
               role="region"
               aria-labelledby={buttonId}
+              aria-hidden={!isOpen}
               className={cn(
                 'grid overflow-hidden transition-all duration-300 ease-out',
                 isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'

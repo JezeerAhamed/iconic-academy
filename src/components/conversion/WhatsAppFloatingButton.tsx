@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { CONTACT } from '@/lib/contact';
 import { cn } from '@/lib/utils';
-
-const WHATSAPP_NUMBER = '94771041815';
 const DEFAULT_MESSAGE = "Hi, I'd like to know more about Iconic Academy";
 
 function isMobileViewport() {
@@ -50,10 +49,10 @@ export default function WhatsAppFloatingButton({
     const encodedMessage = encodeURIComponent(message);
 
     if (mobile) {
-      return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+      return `${CONTACT.whatsappUrl}?text=${encodedMessage}`;
     }
 
-    return `https://web.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedMessage}`;
+    return `https://web.whatsapp.com/send?phone=${CONTACT.whatsapp.replace(/[^\d]/g, '')}&text=${encodedMessage}`;
   }, [message, mobile]);
 
   return (

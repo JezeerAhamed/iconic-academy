@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronRight, Lock, PlayCircle } from 'lucide-react';
@@ -103,13 +104,13 @@ export default function SubjectDetailPage() {
 
   return (
     <div className="pb-20">
-      <div className="mb-6 flex items-center gap-2 text-sm text-cgray-500 flex-wrap">
+      <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-2 text-sm text-cgray-600 flex-wrap">
         <Link href="/dashboard" className="hover:text-cblue-500 hover:no-underline">Dashboard</Link>
         <ChevronRight className="w-4 h-4" />
         <Link href="/dashboard/subjects" className="hover:text-cblue-500 hover:no-underline">Subjects</Link>
         <ChevronRight className="w-4 h-4" />
         <span className="font-semibold text-cgray-900">{subject.name}</span>
-      </div>
+      </nav>
 
       <div className="rounded-lg border border-cgray-200 bg-cgray-50 p-6 mb-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
@@ -118,7 +119,7 @@ export default function SubjectDetailPage() {
               className="w-20 h-20 rounded-xl flex items-center justify-center text-4xl shrink-0"
               style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
             >
-              {subject.icon}
+              <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="text-4xl" />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -179,6 +180,8 @@ export default function SubjectDetailPage() {
               <button
                 type="button"
                 onClick={() => setExpandedUnitId((current) => (current === unit.id ? null : unit.id))}
+                aria-expanded={isExpanded}
+                aria-controls={`dashboard-unit-panel-${unit.id}`}
                 className="w-full text-left"
               >
                 <div className="flex items-center justify-between p-4 gap-4">
@@ -188,7 +191,7 @@ export default function SubjectDetailPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-base font-semibold text-cgray-900">Unit {index + 1}: {unit.title}</p>
-                      <p className="text-sm text-cgray-500 truncate">{unit.description}</p>
+                      <p className="text-sm text-cgray-600 truncate">{unit.description}</p>
                     </div>
                   </div>
 
@@ -201,7 +204,7 @@ export default function SubjectDetailPage() {
                     ) : (
                       <span className="c-badge-green mr-2">Free</span>
                     )}
-                    <ChevronDown className={`w-4 h-4 text-cgray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    <ChevronDown aria-hidden="true" className={`w-4 h-4 text-cgray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
 
@@ -216,7 +219,7 @@ export default function SubjectDetailPage() {
               </button>
 
               {isExpanded ? (
-                <div className="border-t border-cgray-100 px-4 py-3">
+                <div id={`dashboard-unit-panel-${unit.id}`} aria-hidden={!isExpanded} className="border-t border-cgray-100 px-4 py-3">
                   <div className="flex flex-col gap-1">
                     {unit.lessons.map((lesson) => {
                       const progress = progressMap[lesson.id!];

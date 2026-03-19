@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import EmojiIcon from '@/components/accessibility/EmojiIcon';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -292,7 +293,7 @@ export default function DashboardSubjectsPage() {
     return (
       <div className="pb-12">
         <div className="c-card p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cgray-500">Subjects</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cgray-600">Subjects</p>
           <h1 className="mt-2 text-2xl font-bold text-cgray-900">Your learning dashboard is almost ready.</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-cgray-600">
             Your subjects are being set up. Check back soon!
@@ -316,11 +317,11 @@ export default function DashboardSubjectsPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="c-card p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-cgray-500">Completed lessons</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-cgray-600">Completed lessons</p>
               <p className="mt-2 text-2xl font-bold text-cgray-900">{totalCompletedLessons}</p>
             </div>
             <div className="c-card p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-cgray-500">Available lessons</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-cgray-600">Available lessons</p>
               <p className="mt-2 text-2xl font-bold text-cgray-900">{totalLessons}</p>
             </div>
           </div>
@@ -336,12 +337,12 @@ export default function DashboardSubjectsPage() {
                   className="flex h-12 w-12 items-center justify-center rounded-lg text-2xl"
                   style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
                 >
-                  {subject.icon}
+                  <EmojiIcon emoji={subject.icon} label={subject.name} decorative className="text-2xl" />
                 </div>
 
                 <div>
                   <h2 className="text-base font-semibold text-cgray-900">{subject.name}</h2>
-                  <p className="mt-1 text-sm text-cgray-500">{subject.completedLessons} lessons completed</p>
+                  <p className="mt-1 text-sm text-cgray-600">{subject.completedLessons} lessons completed</p>
                 </div>
               </div>
 

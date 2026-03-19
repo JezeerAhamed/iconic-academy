@@ -76,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <div className="relative h-11 w-[150px] overflow-hidden rounded border border-cgray-200 bg-white">
                             <Image
                                 src="/logo.jpg"
-                                alt="Iconic Academy"
+                                alt="Iconic Academy logo"
                                 fill
                                 priority
                                 sizes="150px"
@@ -119,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
             </aside>
 
-            <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <header className="flex h-16 shrink-0 items-center border-b border-cgray-200 bg-white px-8">
                     <div className="flex w-full items-center justify-end gap-4">
                         <span className="rounded-full bg-cblue-25 px-3 py-1 text-sm font-medium text-cblue-500">
@@ -137,7 +137,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         {children}
                     </motion.div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }

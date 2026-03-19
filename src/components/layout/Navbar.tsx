@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -33,6 +33,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuId = useId();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -53,6 +56,59 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const menuElement = mobileMenuRef.current;
+    const focusableElements = menuElement?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    focusableElements?.[0]?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!menuElement) {
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsOpen(false);
+        window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+        return;
+      }
+
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const activeFocusableElements = Array.from(
+        menuElement.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+
+      if (activeFocusableElements.length === 0) {
+        return;
+      }
+
+      const firstElement = activeFocusableElements[0];
+      const lastElement = activeFocusableElements[activeFocusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -77,7 +133,7 @@ export default function Navbar() {
             <div className="relative h-8 w-[140px] overflow-hidden">
               <Image
                 src="/logo.jpg"
-                alt="Iconic Academy"
+                alt="Iconic Academy logo"
                 fill
                 priority
                 sizes="140px"
@@ -86,7 +142,7 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav aria-label="Main navigation" className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -120,10 +176,13 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={() => setDropdownOpen((current) => !current)}
+                      aria-expanded={dropdownOpen}
+                      aria-haspopup="menu"
+                      aria-label={`Open account menu for ${displayName}`}
                       className="flex items-center gap-2 text-left text-cgray-700 transition-colors hover:text-cgray-900"
                     >
                       {user.photoURL ? (
-                        <img src={user.photoURL} alt="Avatar" className="w-8 h-8 rounded-full object-cover cursor-pointer" />
+                        <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full object-cover cursor-pointer" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-cblue-500 text-white text-sm font-bold flex items-center justify-center cursor-pointer hover:bg-cblue-600 transition-colors">
                           {avatarLetter}
@@ -204,7 +263,12 @@ export default function Navbar() {
           )}
 
           <button
+            type="button"
+            ref={menuButtonRef}
             onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
+            aria-controls={mobileMenuId}
+            aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
             className="text-cgray-700 hover:text-cgray-900 p-1 -ml-1 md:hidden"
           >
             {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -215,13 +279,15 @@ export default function Navbar() {
       <AnimatePresence>
         {isOpen ? (
           <motion.div
+            id={mobileMenuId}
+            ref={mobileMenuRef}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="md:hidden border-t border-cgray-200 bg-white"
           >
-            <div className="px-6 py-4 space-y-1">
+            <nav aria-label="Mobile navigation" className="px-6 py-4 space-y-1">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -249,7 +315,7 @@ export default function Navbar() {
                   <>
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-cgray-200 mb-2">
                       {user.photoURL ? (
-                        <img src={user.photoURL} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+                        <img src={user.photoURL} alt="" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-cblue-500 flex items-center justify-center text-lg font-bold text-white uppercase">
                           {avatarLetter}
@@ -297,7 +363,7 @@ export default function Navbar() {
                   </>
                 )}
               </div>
-            </div>
+            </nav>
           </motion.div>
         ) : null}
       </AnimatePresence>

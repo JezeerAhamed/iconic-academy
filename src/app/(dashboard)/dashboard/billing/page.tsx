@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getSecureJsonHeaders } from '@/lib/client-security';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { CreditCard, CalendarDays, ExternalLink, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -17,8 +18,9 @@ export default function BillingPortal() {
     try {
       const response = await fetch('/api/stripe/portal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getSecureJsonHeaders(),
         body: JSON.stringify({ userId: user.uid }),
+        credentials: 'same-origin',
       });
       const data = await response.json();
       if (data.url) {

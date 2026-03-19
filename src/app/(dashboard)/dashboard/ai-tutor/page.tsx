@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { BrainCircuit, Send, Sparkles } from 'lucide-react';
+import { getSecureJsonHeaders } from '@/lib/client-security';
 import { auth } from '@/lib/firebase';
+import { sanitiseInput } from '@/lib/sanitise';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
@@ -63,6 +65,8 @@ export default function AITutorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<SubjectOption>('Physics');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -92,7 +96,7 @@ export default function AITutorPage() {
   }, [isLoading, messages]);
 
   const sendMessage = async (userMessage: string) => {
-    const trimmed = userMessage.trim();
+    const trimmed = sanitiseInput(userMessage, { maxLength: 1200 });
     if (!trimmed || !user || isLoading) return;
 
     const timestamp = new Date();
@@ -115,13 +119,14 @@ export default function AITutorPage() {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getSecureJsonHeaders(),
         body: JSON.stringify({
           message: trimmed,
           history: historyForRequest,
           subject: selectedSubject,
           userId: user.uid,
         }),
+        credentials: 'same-origin',
       });
 
       const data = await response.json().catch(() => ({}));
@@ -138,6 +143,9 @@ export default function AITutorPage() {
           timestamp: new Date(),
         },
       ]);
+      setLiveAnnouncement(
+        `AI tutor replied: ${(data.message || data.response || data.content || 'Sorry, I had trouble responding. Please try again.').slice(0, 160)}`
+      );
     } catch (error) {
       console.error('AI tutor request failed', error);
       setMessages((prev) => [
@@ -148,8 +156,10 @@ export default function AITutorPage() {
           timestamp: new Date(),
         },
       ]);
+      setLiveAnnouncement('The AI tutor could not answer right now.');
     } finally {
       setIsLoading(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -182,7 +192,7 @@ export default function AITutorPage() {
             </div>
 
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-cgray-500">Subject context</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-cgray-600">Subject context</span>
               <select
                 value={selectedSubject}
                 onChange={(event) => setSelectedSubject(event.target.value as SubjectOption)}
@@ -207,13 +217,23 @@ export default function AITutorPage() {
             </span>
             <div>
               <CardTitle className="text-xl font-semibold text-cgray-900">ICONIC ACADEMY AI Tutor</CardTitle>
-              <p className="text-sm text-cgray-500">Currently focused on {selectedSubject}</p>
+              <p className="text-sm text-cgray-600">Currently focused on {selectedSubject}</p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="flex h-[calc(100vh-17rem)] min-h-[540px] flex-col p-0">
-          <div className="flex-1 overflow-y-auto bg-cgray-50 px-4 py-5 sm:px-6">
+          <div className="sr-only" aria-live="polite" aria-atomic="false">
+            {liveAnnouncement}
+          </div>
+
+          <div
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-atomic="false"
+            className="flex-1 overflow-y-auto bg-cgray-50 px-4 py-5 sm:px-6"
+          >
             {messages.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -223,7 +243,7 @@ export default function AITutorPage() {
                   <h2 className="mb-2 text-lg font-semibold text-cgray-900">
                     Hi! I&apos;m your ICONIC ACADEMY AI Tutor.
                   </h2>
-                  <p className="mb-5 max-w-xl text-base text-cgray-500">
+                  <p className="mb-5 max-w-xl text-base text-cgray-600">
                     Ask me anything about A/L Physics, Chemistry, Biology or Combined Maths.
                   </p>
                   <div className="grid w-full max-w-3xl gap-3 md:grid-cols-2">
@@ -238,7 +258,7 @@ export default function AITutorPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="mt-5 text-xs text-cgray-500">
+                  <p className="mt-5 text-xs text-cgray-600">
                     Need something else? Type your own question below and the AI Tutor will respond in
                     the selected subject context.
                   </p>
@@ -262,7 +282,7 @@ export default function AITutorPage() {
                       >
                         {message.content}
                       </div>
-                      <span className="px-1 text-xs text-cgray-500">{formatTime(message.timestamp)}</span>
+                      <span className="px-1 text-xs text-cgray-600">{formatTime(message.timestamp)}</span>
                     </div>
                   </div>
                 ))}
@@ -280,7 +300,7 @@ export default function AITutorPage() {
                           </div>
                         </div>
                       </div>
-                      <span className="px-1 text-xs text-cgray-500">{formatTime(new Date())}</span>
+                      <span className="px-1 text-xs text-cgray-600">{formatTime(new Date())}</span>
                     </div>
                   </div>
                 ) : null}
@@ -293,8 +313,9 @@ export default function AITutorPage() {
           <div className="border-t border-cgray-200 bg-white p-4 sm:p-5">
             <form onSubmit={handleSubmit} className="flex gap-3">
               <Input
+                ref={inputRef}
                 value={input}
-                onChange={(event) => setInput(event.target.value)}
+                onChange={(event) => setInput(sanitiseInput(event.target.value, { maxLength: 1200 }))}
                 placeholder="Ask anything about A/L Physics, Chemistry, Biology or Maths..."
                 className="c-input h-12"
                 disabled={isLoading}

@@ -95,14 +95,14 @@ export default function FeaturesSection() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
-            <motion.div
+            <motion.li
               key={feature.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.07 }}
-              className="flex flex-col gap-3 p-4"
+              className="flex list-none flex-col gap-3 p-4"
             >
               <div
                 className="w-10 h-10 rounded-lg bg-cblue-50 flex items-center justify-center flex-shrink-0 text-cblue-500"
@@ -116,9 +116,9 @@ export default function FeaturesSection() {
 
               <h3 className="text-base font-semibold text-cgray-900 leading-snug">{feature.title}</h3>
               <p className="text-sm text-cgray-600 leading-relaxed">{feature.description}</p>
-            </motion.div>
+            </motion.li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );
