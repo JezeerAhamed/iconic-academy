@@ -71,7 +71,7 @@ export default function Navbar() {
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="sticky top-0 z-[100] w-full border-b border-cgray-200 bg-white shadow-none"
     >
-      <div className="max-w-coursera mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <div className="mx-auto flex h-16 max-w-site items-center justify-between gap-4 px-6">
         <div className="flex items-center justify-between w-full gap-4">
           <Link href="/" className="text-xl font-bold text-cblue-500 tracking-tight hover:no-underline hover:text-cblue-600 transition-colors">
             <div className="relative h-8 w-[140px] overflow-hidden">
@@ -185,7 +185,7 @@ export default function Navbar() {
               ) : (
                 <>
                   <Link href="/auth/login">
-                    <Button variant="ghost" size="sm" className="btn-secondary btn-sm border border-cgray-800 text-cgray-900 hover:bg-cgray-50 shadow-none">
+                    <Button variant="ghost" size="sm" className="btn-ghost btn-sm border border-cgray-700 text-cgray-900 hover:bg-cgray-50 shadow-none">
                       Sign In
                     </Button>
                   </Link>
@@ -285,7 +285,7 @@ export default function Navbar() {
                 ) : (
                   <>
                     <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start border border-cgray-800 text-cgray-900 hover:bg-cgray-50 shadow-none">
+                      <Button variant="ghost" className="btn-ghost w-full justify-start border border-cgray-700 text-cgray-900 hover:bg-cgray-50 shadow-none">
                         Sign In
                       </Button>
                     </Link>

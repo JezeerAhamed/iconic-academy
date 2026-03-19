@@ -15,18 +15,8 @@ import { Button } from '@/components/ui/button';
 
 export default function HeroSection() {
   return (
-    <section className="relative w-full bg-cblue-25">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 opacity-0" />
-
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="hidden"
-        />
-      </div>
-
-      <div className="c-container relative z-10 grid grid-cols-1 items-center gap-12 py-16 md:grid-cols-2 md:py-20">
+    <section className="w-full bg-cblue-25 py-16 md:py-20">
+      <div className="c-wrap grid grid-cols-1 items-center gap-12 md:grid-cols-2">
         <div className="flex flex-col items-start text-left">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
@@ -105,6 +95,9 @@ export default function HeroSection() {
           className="relative w-full max-w-sm md:ml-auto"
         >
           <div className="c-card p-4 max-w-sm">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-cgray-400">
+              AI Tutor - Live Preview
+            </div>
             <div className="relative flex min-h-[360px] overflow-hidden rounded-lg border border-cgray-200 bg-white">
               <div className="hidden w-52 flex-col gap-6 border-r border-cgray-200 bg-cgray-50 p-5 lg:flex">
                 <div className="flex items-center gap-2">
@@ -143,7 +136,7 @@ export default function HeroSection() {
                 <div className="flex-1 space-y-5">
                   <div className="flex flex-row-reverse gap-3">
                     <div className="h-8 w-8 shrink-0 rounded-full bg-cgray-200" />
-                    <div className="max-w-[78%] rounded-2xl rounded-tr-md bg-cblue-500 p-4 text-white shadow-none">
+                    <div className="max-w-[78%] rounded-lg bg-cblue-500 p-4 text-white shadow-none">
                       <p className="text-sm leading-6">
                         I&apos;m stuck on this past paper question. How do I resolve the tension components in equilibrium?
                       </p>
@@ -154,7 +147,7 @@ export default function HeroSection() {
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cblue-25 border border-cblue-100">
                       <BrainCircuit className="h-4 w-4 text-cblue-500" />
                     </div>
-                    <div className="w-[82%] rounded-2xl rounded-tl-md border border-cgray-200 bg-cgray-50 p-4 text-cgray-700 shadow-none">
+                    <div className="w-[82%] rounded-lg border border-cgray-200 bg-cgray-50 p-4 text-cgray-700 shadow-none">
                       <p className="mb-3 text-sm font-semibold text-cgray-900">Great question! Let&apos;s break it down step by step:</p>
 
                       <div className="mb-4 space-y-2">

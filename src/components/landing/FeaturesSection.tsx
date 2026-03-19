@@ -19,7 +19,6 @@ const features = [
     title: 'AI Tutor',
     description:
       'Context-aware AI that understands the Sri Lankan A/L syllabus and explains concepts step by step in English or Tamil.',
-    color: '#6366f1',
     tag: 'Core Feature',
   },
   {
@@ -27,7 +26,6 @@ const features = [
     title: 'Full Syllabus Coverage',
     description:
       'Every unit, topic and lesson in Physics, Chemistry, Biology, and Combined Maths, mapped to the Sri Lankan A/L curriculum.',
-    color: '#3b82f6',
     tag: '408 Lessons',
   },
   {
@@ -35,7 +33,6 @@ const features = [
     title: 'Past Paper Engine',
     description:
       'Filter by subject, unit and year, then review step-by-step solutions, marking logic, and AI-guided explanations.',
-    color: '#f59e0b',
     tag: 'Exam Ready',
   },
   {
@@ -43,7 +40,6 @@ const features = [
     title: 'Smart Practice',
     description:
       'Train with MCQ, structured, and essay-style questions while tracking accuracy, speed, and mastery in real time.',
-    color: '#22c55e',
     tag: 'Adaptive',
   },
   {
@@ -51,7 +47,6 @@ const features = [
     title: 'Weak Area Detection',
     description:
       'Performance signals are grouped into clear weak areas so you know exactly what to revise next.',
-    color: '#f97316',
     tag: 'AI-Powered',
   },
   {
@@ -59,7 +54,6 @@ const features = [
     title: 'Voice AI Tutoring',
     description:
       'Speak your question, hear the explanation, and keep studying hands-free when reading or typing slows you down.',
-    color: '#a855f7',
     tag: 'Voice',
   },
   {
@@ -67,7 +61,6 @@ const features = [
     title: 'Bilingual Support',
     description:
       'The tutor responds in Tamil when you write in Tamil and defaults to English when you do not.',
-    color: '#ec4899',
     tag: 'Tamil + English',
   },
   {
@@ -75,7 +68,6 @@ const features = [
     title: 'Gamified Learning',
     description:
       'Earn XP, keep streaks alive, unlock badges, and build daily momentum without turning study into a chore.',
-    color: '#eab308',
     tag: 'Motivation',
   },
 ];
@@ -85,14 +77,14 @@ export default function FeaturesSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section ref={ref} className="bg-white border-t border-cgray-200 py-16">
-      <div className="c-container">
+    <section ref={ref} className="bg-cgray-50 border-t border-cgray-200 py-16">
+      <div className="c-wrap">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           className="text-center mb-12"
         >
-          <span className="text-sm font-semibold text-cblue-500 uppercase tracking-wider mb-3 inline-block">
+          <span className="c-section-label mb-3 inline-block">
             Built Different
           </span>
           <h2 className="text-3xl font-bold text-cgray-900 mb-3">
@@ -118,7 +110,7 @@ export default function FeaturesSection() {
                 {feature.icon}
               </div>
 
-              <span className="text-xs font-semibold text-cblue-600 uppercase tracking-wider">
+              <span className="c-section-label mb-0 text-xs text-cblue-600">
                 {feature.tag}
               </span>
 

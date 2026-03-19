@@ -22,7 +22,7 @@ function DashboardLayoutSkeleton() {
             </div>
 
             <main className="flex-1 md:ml-60">
-                <div className="mx-auto max-w-coursera space-y-6 px-6 py-8">
+                <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
                     <div className="h-4 w-36 animate-pulse rounded bg-cgray-100" />
                     <div className="rounded-lg border border-cgray-200 bg-white p-6 shadow-card">
                         <div className="h-8 w-56 animate-pulse rounded bg-cgray-100" />
@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Sidebar />
 
             <main className="flex-1 md:ml-60 min-h-screen">
-                <div className="mx-auto max-w-coursera px-6 py-8 pb-24 md:pb-8">
+                <div className="mx-auto max-w-5xl px-6 py-8 pb-24 md:pb-8">
                     <Breadcrumbs />
                     {children}
                 </div>

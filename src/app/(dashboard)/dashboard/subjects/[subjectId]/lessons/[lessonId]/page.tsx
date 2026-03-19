@@ -117,7 +117,7 @@ export default function LessonViewerPage() {
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div
                 className="flex h-20 w-20 items-center justify-center rounded-full shadow-card"
-                style={{ background: `linear-gradient(135deg, ${subject.color}, ${subject.color}80)` }}
+                style={{ backgroundColor: subject.color }}
               >
                 <PlayCircle className="translate-x-0.5 text-white" fill="currentColor" />
               </div>

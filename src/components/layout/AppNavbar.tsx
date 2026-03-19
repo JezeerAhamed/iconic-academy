@@ -76,7 +76,7 @@ export default function AppNavbar() {
         scrolled ? 'border-b border-cgray-200 bg-white shadow-nav' : 'border-b border-cgray-200 bg-white/95'
       }`}
     >
-      <div className="mx-auto flex h-full max-w-coursera items-center justify-between px-6">
+      <div className="mx-auto flex h-full max-w-site items-center justify-between px-6">
         <Link href="/dashboard" className="group flex flex-shrink-0 items-center gap-2">
           <div className="relative h-9 w-[132px] overflow-hidden rounded border border-cgray-200 bg-white transition-transform duration-200 group-hover:scale-[1.02]">
             <Image

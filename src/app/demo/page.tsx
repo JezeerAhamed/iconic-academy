@@ -36,22 +36,22 @@ export default function DemoPage() {
     const [view, setView] = useState<'lesson' | 'quiz'>('lesson');
 
     return (
-        <div className="min-h-screen bg-[#080c14] text-white p-8">
-            <div className="max-w-6xl mx-auto space-y-8">
-                <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+        <div className="min-h-screen bg-cgray-50 p-8">
+            <div className="mx-auto max-w-6xl space-y-8">
+                <div className="mb-8 flex items-center justify-between border-b border-cgray-200 pb-4">
+                    <h1 className="text-3xl font-bold text-cgray-900">
                         Feature Demo (Bypassing Auth)
                     </h1>
                     <div className="flex gap-4">
                         <button
                             onClick={() => setView('lesson')}
-                            className={`px-4 py-2 rounded-full border transition ${view === 'lesson' ? 'bg-indigo-600 border-indigo-500' : 'border-white/10 hover:border-white/30'}`}
+                            className={`rounded border px-4 py-2 text-sm font-semibold transition-colors ${view === 'lesson' ? 'border-cblue-500 bg-cblue-500 text-white' : 'border-cgray-200 bg-white text-cgray-700 hover:bg-cgray-50'}`}
                         >
                             Lesson Viewer
                         </button>
                         <button
                             onClick={() => setView('quiz')}
-                            className={`px-4 py-2 rounded-full border transition ${view === 'quiz' ? 'bg-indigo-600 border-indigo-500' : 'border-white/10 hover:border-white/30'}`}
+                            className={`rounded border px-4 py-2 text-sm font-semibold transition-colors ${view === 'quiz' ? 'border-cblue-500 bg-cblue-500 text-white' : 'border-cgray-200 bg-white text-cgray-700 hover:bg-cgray-50'}`}
                         >
                             Unit Quiz
                         </button>
@@ -59,7 +59,7 @@ export default function DemoPage() {
                 </div>
 
                 {view === 'lesson' && mockLesson ? (
-                    <div className="bg-[#0f172a] rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+                    <div className="overflow-hidden rounded-lg border border-cgray-200 bg-white shadow-card">
                         <LessonClientViewer
                             lesson={mockLesson}
                             subject={mockSubject}
@@ -68,7 +68,7 @@ export default function DemoPage() {
                         />
                     </div>
                 ) : (
-                    <div className="text-center py-20 text-gray-400">
+                    <div className="py-20 text-center text-cgray-500">
                         <p>Select Lesson Viewer to see the Mastery System in action.</p>
                     </div>
                 )}

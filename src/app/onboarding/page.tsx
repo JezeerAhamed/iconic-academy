@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { SUBJECTS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
-import { Zap, Check, ChevronRight, Loader2, School, MapPin } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function OnboardingPage() {
@@ -22,26 +22,24 @@ export default function OnboardingPage() {
     const [district, setDistrict] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    // If not logged in, they shouldn't be here
     if (!user && !profile && typeof window !== 'undefined') {
         // Handle redirect in layout or here
     }
 
     const handleSubjectToggle = (id: string) => {
         if (selectedSubjects.includes(id)) {
-            setSelectedSubjects(prev => prev.filter(s => s !== id));
+            setSelectedSubjects((prev) => prev.filter((s) => s !== id));
         } else {
-            setSelectedSubjects(prev => [...prev, id]);
+            setSelectedSubjects((prev) => [...prev, id]);
         }
     };
 
     const handleComplete = async () => {
-        if (!user) return toast.error("User not found");
-        if (selectedSubjects.length === 0) return toast.error("Please select at least one subject");
+        if (!user) return toast.error('User not found');
+        if (selectedSubjects.length === 0) return toast.error('Please select at least one subject');
 
         setIsSaving(true);
         try {
-            // Update User Profile
             const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
                 enrolledSubjects: selectedSubjects,
@@ -52,7 +50,6 @@ export default function OnboardingPage() {
                 updatedAt: new Date().toISOString()
             });
 
-            // Initialize Gamification Document
             const gamificationRef = doc(db, 'gamification', user.uid);
             const gamificationSnap = await getDoc(gamificationRef);
 
@@ -69,28 +66,28 @@ export default function OnboardingPage() {
                 });
             }
 
-            toast.success("Welcome to ICONIC ACADEMY! 🎉 Let's get your first lesson done.", {
+            toast.success("Welcome to ICONIC ACADEMY! Let's get your first lesson done.", {
                 duration: 4000,
                 position: 'top-center'
             });
             router.push('/dashboard');
-        } catch (error: any) {
-            toast.error(error.message || "Failed to save profile");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Failed to save profile');
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center py-12 px-4 selection:bg-purple-200">
-            <div className="w-full max-w-lg relative z-10 w-full flex flex-col items-center">
-                {/* Progress Dots */}
-                <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="min-h-screen bg-cgray-50 text-cgray-900 flex flex-col items-center justify-center px-4 py-12 selection:bg-cblue-100">
+            <div className="relative z-10 flex w-full max-w-lg flex-col items-center">
+                <div className="mb-8 flex items-center justify-center gap-2">
                     {[1, 2, 3].map((s) => (
                         <div
                             key={s}
-                            className={`w-3 h-3 rounded-full transition-colors ${step === s ? 'bg-purple-600' : step > s ? 'bg-purple-300' : 'bg-slate-200'
-                                }`}
+                            className={`h-3 w-3 rounded-full transition-colors ${
+                                step === s ? 'bg-cblue-500' : step > s ? 'bg-cblue-200' : 'bg-cgray-200'
+                            }`}
                         />
                     ))}
                 </div>
@@ -103,40 +100,40 @@ export default function OnboardingPage() {
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                     className="w-full"
                 >
-                    {/* Step 1: Subjects */}
-                    {step === 1 && (
+                    {step === 1 ? (
                         <div className="w-full">
-                            <div className="text-center mb-8">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                            <div className="mb-8 text-center">
+                                <h1 className="mb-3 text-2xl font-bold tracking-tight text-cgray-900 sm:text-3xl">
                                     Which subjects are you studying for A/L?
                                 </h1>
-                                <p className="text-slate-500 text-sm sm:text-base">
+                                <p className="text-sm text-cgray-500 sm:text-base">
                                     Select all that apply. You can change this later.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
+                            <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4">
                                 {SUBJECTS.map((subject) => {
                                     const isSelected = selectedSubjects.includes(subject.id);
                                     return (
                                         <button
                                             key={subject.id}
                                             onClick={() => handleSubjectToggle(subject.id)}
-                                            className={`relative flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all ${isSelected
-                                                    ? 'border-purple-600 bg-purple-50 shadow-sm'
-                                                    : 'border-slate-200 bg-white hover:border-slate-300'
-                                                }`}
+                                            className={`relative flex flex-col items-center justify-center rounded-lg border p-6 transition-all ${
+                                                isSelected
+                                                    ? 'border-cblue-500 bg-cblue-25 shadow-card'
+                                                    : 'border-cgray-200 bg-white hover:border-cgray-300'
+                                            }`}
                                         >
-                                            {isSelected && (
-                                                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center text-white">
-                                                    <Check className="w-3 h-3" strokeWidth={3} />
+                                            {isSelected ? (
+                                                <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-cblue-500 text-white">
+                                                    <Check className="h-3 w-3" strokeWidth={3} />
                                                 </div>
-                                            )}
-                                            <div className="text-4xl mb-3">{subject.icon}</div>
-                                            <h3 className={`font-bold text-lg mb-1 ${isSelected ? 'text-purple-900' : 'text-slate-800'}`}>
+                                            ) : null}
+                                            <div className="mb-3 text-4xl">{subject.icon}</div>
+                                            <h3 className="mb-1 text-lg font-bold text-cgray-900">
                                                 {subject.name}
                                             </h3>
-                                            <p className={`text-sm ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                                            <p className={`text-sm ${isSelected ? 'text-cblue-500' : 'text-cgray-500'}`}>
                                                 {subject.id === 'maths' ? '16 Topics' : `${subject.unitCount} Units`}
                                             </p>
                                         </button>
@@ -147,29 +144,29 @@ export default function OnboardingPage() {
                             <Button
                                 onClick={() => setStep(2)}
                                 disabled={selectedSubjects.length === 0}
-                                className={`w-full h-14 rounded-xl font-bold text-lg transition-all ${selectedSubjects.length > 0
-                                        ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200'
-                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                    }`}
+                                className={`h-14 w-full rounded text-lg font-bold transition-colors ${
+                                    selectedSubjects.length > 0
+                                        ? 'bg-cblue-500 text-white hover:bg-cblue-600'
+                                        : 'bg-cgray-100 text-cgray-400'
+                                }`}
                             >
                                 Next
                             </Button>
                         </div>
-                    )}
+                    ) : null}
 
-                    {/* Step 2: Exam Year */}
-                    {step === 2 && (
+                    {step === 2 ? (
                         <div className="w-full">
-                            <div className="text-center mb-8">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                            <div className="mb-8 text-center">
+                                <h1 className="mb-3 text-2xl font-bold tracking-tight text-cgray-900 sm:text-3xl">
                                     When is your A/L examination?
                                 </h1>
-                                <p className="text-slate-500 text-sm sm:text-base">
+                                <p className="text-sm text-cgray-500 sm:text-base">
                                     We will personalise your study plan around your exam date.
                                 </p>
                             </div>
 
-                            <div className="flex flex-col gap-3 sm:gap-4 mb-8">
+                            <div className="mb-8 flex flex-col gap-3 sm:gap-4">
                                 {[
                                     { year: 2025, desc: 'Exam in a few months' },
                                     { year: 2026, desc: 'About a year away', mostCommon: true },
@@ -180,20 +177,23 @@ export default function OnboardingPage() {
                                         <button
                                             key={opt.year}
                                             onClick={() => setExamYear(opt.year)}
-                                            className={`relative flex flex-col justify-center p-5 rounded-2xl border-2 transition-all text-left ${isSelected
-                                                    ? 'border-purple-600 bg-purple-600 text-white shadow-md shadow-purple-200'
-                                                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-800'
-                                                }`}
+                                            className={`relative flex flex-col justify-center rounded-lg border p-5 text-left transition-all ${
+                                                isSelected
+                                                    ? 'border-cblue-500 bg-cblue-25 text-cgray-900 shadow-card'
+                                                    : 'border-cgray-200 bg-white text-cgray-800 hover:border-cgray-300'
+                                            }`}
                                         >
-                                            <div className="flex items-center justify-between w-full">
-                                                <h3 className="font-bold text-2xl">{opt.year}</h3>
-                                                {opt.mostCommon && (
-                                                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                            <div className="flex w-full items-center justify-between">
+                                                <h3 className="text-2xl font-bold">{opt.year}</h3>
+                                                {opt.mostCommon ? (
+                                                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                        isSelected ? 'bg-cblue-500 text-white' : 'bg-cgray-100 text-cgray-500'
+                                                    }`}>
                                                         most common
                                                     </span>
-                                                )}
+                                                ) : null}
                                             </div>
-                                            <p className={`text-sm mt-1 opacity-90 ${isSelected ? 'text-purple-100' : 'text-slate-500'}`}>
+                                            <p className={`mt-1 text-sm opacity-90 ${isSelected ? 'text-cblue-500' : 'text-cgray-500'}`}>
                                                 {opt.desc}
                                             </p>
                                         </button>
@@ -205,51 +205,49 @@ export default function OnboardingPage() {
                                 <Button
                                     variant="ghost"
                                     onClick={() => setStep(1)}
-                                    className="w-14 h-14 rounded-xl text-slate-500 hover:bg-slate-100 font-bold"
+                                    className="h-14 w-14 rounded border border-cgray-200 text-cgray-500 hover:bg-cgray-100 font-bold"
                                 >
                                     Back
                                 </Button>
                                 <Button
                                     onClick={() => setStep(3)}
                                     disabled={!examYear}
-                                    className={`flex-1 h-14 rounded-xl font-bold text-lg transition-all ${examYear
-                                            ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200'
-                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                        }`}
+                                    className={`h-14 flex-1 rounded text-lg font-bold transition-colors ${
+                                        examYear ? 'bg-cblue-500 text-white hover:bg-cblue-600' : 'bg-cgray-100 text-cgray-400'
+                                    }`}
                                 >
                                     Next
                                 </Button>
                             </div>
                         </div>
-                    )}
+                    ) : null}
 
-                    {/* Step 3: School & District */}
-                    {step === 3 && (
+                    {step === 3 ? (
                         <div className="w-full">
-                            <div className="text-center mb-8">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                            <div className="mb-8 text-center">
+                                <h1 className="mb-3 text-2xl font-bold tracking-tight text-cgray-900 sm:text-3xl">
                                     Which school are you from?
                                 </h1>
-                                <p className="text-slate-500 text-sm sm:text-base">
-                                    Optional — helps us show you how your school ranks nationally.
+                                <p className="text-sm text-cgray-500 sm:text-base">
+                                    Optional - helps us show you how your school ranks nationally.
                                 </p>
                             </div>
 
-                            <div className="space-y-5 mb-8 text-left">
+                            <div className="mb-8 space-y-5 text-left">
                                 <div className="space-y-2">
                                     <input
                                         type="text"
                                         placeholder="School name (e.g. Royal College)"
                                         value={school}
                                         onChange={(e) => setSchool(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl px-4 py-4 outline-none focus:border-purple-600 focus:bg-white transition-all font-medium"
+                                        className="c-input min-h-14 font-medium"
                                     />
                                 </div>
-                                <div className="space-y-2 relative">
+                                <div className="relative space-y-2">
                                     <select
                                         value={district}
                                         onChange={(e) => setDistrict(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl px-4 py-4 outline-none focus:border-purple-600 focus:bg-white transition-all font-medium appearance-none"
+                                        className="c-input min-h-14 appearance-none font-medium"
                                     >
                                         <option value="" disabled>Select your district</option>
                                         {[
@@ -258,12 +256,12 @@ export default function OnboardingPage() {
                                             'Vavuniya', 'Mullaitivu', 'Batticaloa', 'Ampara', 'Trincomalee',
                                             'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
                                             'Monaragala', 'Ratnapura', 'Kegalle'
-                                        ].map(d => (
+                                        ].map((d) => (
                                             <option key={d} value={d}>{d}</option>
                                         ))}
                                     </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        ▼
+                                    <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-cgray-400">
+                                        v
                                     </div>
                                 </div>
                             </div>
@@ -272,20 +270,20 @@ export default function OnboardingPage() {
                                 <Button
                                     onClick={handleComplete}
                                     disabled={isSaving}
-                                    className="w-full h-14 rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-200 font-bold text-lg border-0 transition-all flex items-center justify-center gap-2"
+                                    className="flex h-14 w-full items-center justify-center gap-2 rounded border-0 bg-cblue-500 text-lg font-bold text-white transition-colors hover:bg-cblue-600"
                                 >
-                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Start Learning!"}
+                                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Start Learning!'}
                                 </Button>
                                 <button
                                     onClick={handleComplete}
                                     disabled={isSaving}
-                                    className="text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors"
+                                    className="text-sm font-medium text-cgray-500 transition-colors hover:text-cblue-500"
                                 >
-                                    Skip for now →
+                                    Skip for now -&gt;
                                 </button>
                             </div>
                         </div>
-                    )}
+                    ) : null}
                 </motion.div>
             </div>
         </div>

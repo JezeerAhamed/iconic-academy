@@ -15,7 +15,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-cgray-900 text-white border-t border-cgray-800">
-      <div className="c-container py-10">
+      <div className="c-wrap py-10">
         <div className="mb-8">
           <Link href="/" className="flex items-center gap-3 mb-4 hover:no-underline">
             <div className="relative h-12 w-[148px] overflow-hidden rounded border border-cgray-800 bg-white">
@@ -133,7 +133,7 @@ export default function Footer() {
 
         <div className="border-t border-cgray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-cgray-500">
-            © {new Date().getFullYear()} ICONIC ACADEMY. All rights reserved. Built for Sri Lankan A/L excellence.
+            (c) {new Date().getFullYear()} ICONIC ACADEMY. All rights reserved. Built for Sri Lankan A/L excellence.
           </p>
           <div className="flex items-center gap-4">
             {['Privacy Policy', 'Terms of Service', 'Refund Policy'].map((label) => (

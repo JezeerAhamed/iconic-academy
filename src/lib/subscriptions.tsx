@@ -1,3 +1,7 @@
+import React from 'react';
+import { Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 export const TIER_RANK: Record<string, number> = {
     free: 0,
     basic: 1,
@@ -11,16 +15,12 @@ export function hasAccess(userTier: string, required: string): boolean {
     return userRank >= requiredRank;
 }
 
-import React from 'react';
-import { Lock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
 export function UpgradeModal({
     required,
     onClose
 }: {
     required: string;
-    onClose?: () => void
+    onClose?: () => void;
 }) {
     const router = useRouter();
 
@@ -29,32 +29,27 @@ export function UpgradeModal({
     };
 
     return (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-t from-[#080c14] via-[#080c14]/80 to-transparent p-4">
-            <div
-                className="bg-[#0b101a] border border-indigo-500/30 rounded-2xl p-8 max-w-md w-full text-center shadow-[0_0_50px_-12px_rgba(99,102,241,0.3)] relative"
-            >
-                {onClose && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 p-4 backdrop-blur-sm">
+            <div className="relative w-full max-w-md rounded-lg border border-cgray-200 bg-white p-8 text-center shadow-card">
+                {onClose ? (
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                        className="absolute right-4 top-4 text-cgray-400 transition-colors hover:text-cgray-700"
                     >
-                        ✕
+                        x
                     </button>
-                )}
-                <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center mx-auto mb-6 text-indigo-400">
-                    <Lock className="w-8 h-8" />
+                ) : null}
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-cblue-25 text-cblue-500">
+                    <Lock className="h-8 w-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3 flex items-center justify-center gap-2">
+                <h2 className="mb-3 flex items-center justify-center gap-2 text-2xl font-bold text-cgray-900">
                     Premium Content
                 </h2>
-                <p className="text-slate-400 mb-8">
-                    This content requires the <span className="text-indigo-400 font-bold capitalize">{required}</span> plan or higher.
+                <p className="mb-8 text-cgray-600">
+                    This content requires the <span className="font-bold capitalize text-cblue-500">{required}</span> plan or higher.
                     Unlock full access to the Sri Lankan A/L syllabus, AI features, and step-by-step past paper solutions by upgrading today.
                 </p>
-                <button
-                    onClick={handleUpgradeClick}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-bold text-lg hover:from-indigo-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-indigo-500/25"
-                >
+                <button onClick={handleUpgradeClick} className="btn-primary w-full justify-center">
                     View Upgrade Plans
                 </button>
             </div>

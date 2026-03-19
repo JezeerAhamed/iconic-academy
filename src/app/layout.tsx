@@ -80,16 +80,17 @@ export default function RootLayout({
       <body className={`${sourceSans.className} antialiased`}>
         <Providers>
           <TopNavbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen bg-white">{children}</main>
           <Toaster
             position="top-right"
             toastOptions={{
               style: {
-                background: "#0f1623",
-                color: "#f1f5f9",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: "12px",
+                background: "#FFFFFF",
+                color: "#1F1F1F",
+                border: "1px solid #E0E0E0",
+                borderRadius: "8px",
                 fontSize: "14px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
               },
             }}
           />

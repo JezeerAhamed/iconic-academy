@@ -44,18 +44,17 @@ const config: Config = {
         },
         cgreen: {
           50: "#E8F5E9",
+          100: "#C8E6C9",
           500: "#2E7D32",
           600: "#1B5E20",
         },
         cyellow: {
-          50: "#FFFDE7",
           400: "#F5BE41",
           500: "#F9A825",
         },
         cred: {
           50: "#FFEBEE",
           500: "#C62828",
-          600: "#B71C1C",
         },
       },
       fontSize: {
@@ -94,9 +93,9 @@ const config: Config = {
         none: "none",
       },
       maxWidth: {
+        site: "1200px",
         coursera: "1200px",
       },
-      spacing: {},
     },
   },
 };

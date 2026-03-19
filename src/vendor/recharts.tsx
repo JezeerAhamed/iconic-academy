@@ -87,11 +87,11 @@ function extractChartConfig(children: React.ReactNode) {
       const barProps = bar.props as BarProps;
       const cellColors = toChildrenArray(barProps.children)
         .filter((node) => getDisplayName(node) === 'Cell')
-        .map((node) => ((node.props as CellProps).fill ?? '#6366f1'));
+        .map((node) => ((node.props as CellProps).fill ?? '#0056D2'));
 
       return {
         dataKey: barProps.dataKey,
-        fill: barProps.fill ?? '#6366f1',
+        fill: barProps.fill ?? '#0056D2',
         name: barProps.name ?? formatLegendLabel(barProps.dataKey),
         cellColors,
       };
@@ -126,7 +126,7 @@ function DefaultBars({
         {ticks.map((tick, index) => (
           <span
             key={`${tick}-${index}`}
-            className="absolute left-0 -translate-y-1/2 text-[11px] text-slate-500"
+            className="absolute left-0 -translate-y-1/2 text-[11px] text-cgray-500"
             style={{ top: `${(index / 4) * 100}%` }}
           >
             {tick}
@@ -139,7 +139,7 @@ function DefaultBars({
           {ticks.map((_, index) => (
             <div
               key={index}
-              className="absolute left-0 right-0 border-t border-white/8"
+              className="absolute left-0 right-0 border-t border-cgray-200"
               style={{ top: `${(index / 4) * 100}%` }}
             />
           ))}
@@ -157,12 +157,12 @@ function DefaultBars({
               <div key={`${label}-${index}`} className="flex h-full flex-col justify-end gap-2">
                 <div className="relative flex-1">
                   <div
-                    className="absolute inset-x-0 bottom-0 rounded-t-xl"
+                    className="absolute inset-x-0 bottom-0 rounded-t-lg"
                     style={{ height: `${height}%`, background: fill }}
                     title={`${label}: ${value}`}
                   />
                 </div>
-                <div className="text-center text-xs text-slate-400">{label}</div>
+                <div className="text-center text-xs text-cgray-500">{label}</div>
               </div>
             );
           })}
@@ -186,7 +186,7 @@ function VerticalStackedBars({
   return (
     <div className="flex h-full w-full flex-col gap-4">
       {showLegend ? (
-        <div className="flex flex-wrap gap-4 text-xs text-slate-300">
+        <div className="flex flex-wrap gap-4 text-xs text-cgray-600">
           {bars.map((bar) => (
             <span key={bar.dataKey} className="inline-flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: bar.fill }} />
@@ -204,8 +204,8 @@ function VerticalStackedBars({
 
           return (
             <div key={`${label}-${index}`} className="grid grid-cols-[96px_1fr] items-center gap-4">
-              <span className="text-xs text-slate-300">{label}</span>
-              <div className="flex h-5 overflow-hidden rounded-full bg-white/8">
+              <span className="text-xs text-cgray-600">{label}</span>
+              <div className="flex h-5 overflow-hidden rounded-full bg-cgray-100">
                 {bars.map((bar) => {
                   const value = Number(item[bar.dataKey] ?? 0);
                   const width = total > 0 ? (value / total) * 100 : 0;
