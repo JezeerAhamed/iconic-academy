@@ -9,7 +9,7 @@ import { ArrowRight, BookOpen, Flame, GraduationCap, Sparkles, Target, Trophy } 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { auth, db } from '@/lib/firebase';
-import { SUBJECT_MAP, SUBJECTS } from '@/lib/constants';
+import { SUBJECT_MAP, SYLLABUS } from '@/lib/constants';
 import { getGeneratedLessons } from '@/lib/dashboard-intelligence';
 import { SubjectId } from '@/lib/types';
 
@@ -114,22 +114,8 @@ function getAccuracyValue(progress: ProgressRecord) {
   return null;
 }
 
-function getFirstLessonForSubject(subjectId: SubjectId) {
-  const firstUnit = SUBJECTS.find((subject) => subject.id === subjectId);
-  if (!firstUnit) return null;
-
-  const subjectLessons = Object.values(SUBJECT_MAP)
-    .filter((subject) => subject.id === subjectId)
-    .flatMap(() => {
-      const allUnits = require('@/lib/constants').SYLLABUS[subjectId] as Array<{ id: string }>;
-      return allUnits.flatMap((unit) => getGeneratedLessons(subjectId, unit.id));
-    });
-
-  return subjectLessons[0] ?? null;
-}
-
 function getAllGeneratedLessons(subjectId: SubjectId) {
-  const syllabus = require('@/lib/constants').SYLLABUS[subjectId] as Array<{ id: string }>;
+  const syllabus = SYLLABUS[subjectId] ?? [];
   return syllabus.flatMap((unit) => getGeneratedLessons(subjectId, unit.id));
 }
 
@@ -259,10 +245,20 @@ export default function DashboardOverview() {
           const xpTotal = typeof gamificationData?.xpTotal === 'number' ? gamificationData.xpTotal : 0;
           const levelInfo = getLevelFromXp(xpTotal);
           const currentStreak = typeof gamificationData?.currentStreak === 'number' ? gamificationData.currentStreak : 0;
-          const lessonsCompleted = progressRecords.filter((record) => isCompletedStatus(record.status)).length;
-          const accuracyValues = progressRecords
-            .map((record) => getAccuracyValue(record))
+
+          const strictCompletedCount = progressRecords.filter((record) => record.status === 'completed').length;
+          const masteryCompletedCount = progressRecords.filter((record) => isCompletedStatus(record.status)).length;
+          const lessonsCompleted = strictCompletedCount > 0 ? strictCompletedCount : masteryCompletedCount;
+
+          const accuracyScoreValues = progressRecords
+            .map((record) => (typeof record.accuracyScore === 'number' ? record.accuracyScore : null))
             .filter((value): value is number => typeof value === 'number');
+          const accuracyValues =
+            accuracyScoreValues.length > 0
+              ? accuracyScoreValues
+              : progressRecords
+                  .map((record) => getAccuracyValue(record))
+                  .filter((value): value is number => typeof value === 'number');
           const averageAccuracy =
             accuracyValues.length > 0
               ? Math.round(accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length)
