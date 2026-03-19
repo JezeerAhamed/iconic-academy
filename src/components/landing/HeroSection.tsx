@@ -11,6 +11,7 @@ import {
   Play,
   Sparkles,
 } from 'lucide-react';
+import EarlyAccessBadge from '@/components/conversion/EarlyAccessBadge';
 import { Button } from '@/components/ui/button';
 
 export default function HeroSection() {
@@ -30,6 +31,15 @@ export default function HeroSection() {
             <div className="pr-2 text-sm font-semibold text-cgray-700">
               Built specifically for the Sri Lankan A/L syllabus
             </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.05 }}
+            className="mt-4"
+          >
+            <EarlyAccessBadge />
           </motion.div>
 
           <motion.h1

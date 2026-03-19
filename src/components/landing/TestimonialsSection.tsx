@@ -2,7 +2,8 @@
 
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { BookOpenCheck, BrainCircuit, CheckCircle2, Landmark, Star } from 'lucide-react';
+import { BookOpenCheck, BrainCircuit, CheckCircle2, Landmark } from 'lucide-react';
+import EarlyAccessBadge from '@/components/conversion/EarlyAccessBadge';
 
 const differentiators = [
   {
@@ -35,6 +36,9 @@ export default function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
+          <div className="mb-4 flex justify-center">
+            <EarlyAccessBadge />
+          </div>
           <h2 className="text-3xl font-bold text-cgray-900 mb-3">
             Honest by Design. Built for Results.
           </h2>
@@ -53,12 +57,6 @@ export default function TestimonialsSection() {
             transition={{ duration: 0.5, delay: 0.15 + index * 0.1 }}
             className="c-card p-6 flex flex-col gap-4"
           >
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, starIndex) => (
-                <Star key={starIndex} className="text-cyellow-400 text-base h-4 w-4 fill-current" />
-              ))}
-            </div>
-
             <p className="text-base text-cgray-700 leading-relaxed flex-1 before:content-[open-quote] after:content-[close-quote]">
               {item.description}
             </p>

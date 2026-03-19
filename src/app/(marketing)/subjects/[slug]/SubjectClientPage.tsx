@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, getDoc, getDocs, orderBy, query, where, doc } from 'firebase/firestore';
 import { ChevronDown, Lock, PlayCircle } from 'lucide-react';
+import EarlyAccessBadge from '@/components/conversion/EarlyAccessBadge';
+import WhatsAppFloatingButton from '@/components/conversion/WhatsAppFloatingButton';
 import { SUBJECT_MAP } from '@/lib/constants';
 import { getGeneratedLessons } from '@/lib/dashboard-intelligence';
 import { auth, db } from '@/lib/firebase';
@@ -401,6 +403,9 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                 <div className="min-w-0">
                   <h1 className="text-3xl md:text-4xl font-bold text-cgray-900 mb-3">{subject.name}</h1>
                   <p className="text-base text-cgray-600 leading-relaxed mb-4 max-w-2xl">{subject.description}</p>
+                  <div className="mb-4">
+                    <EarlyAccessBadge />
+                  </div>
                   <div className="flex flex-wrap items-center gap-4 text-sm text-cgray-600">
                     <span className="flex items-center gap-1.5">
                       <span>{subject.unitCount} Units</span>
@@ -561,6 +566,8 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
           </div>
         </div>
       ) : null}
+
+      <WhatsAppFloatingButton message={`Hi, I'd like to know more about ${subject.name} on Iconic Academy`} />
     </>
   );
 }

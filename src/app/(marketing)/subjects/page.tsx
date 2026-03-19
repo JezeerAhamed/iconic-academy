@@ -1,15 +1,20 @@
-import type { Metadata } from 'next';
 import SubjectsPageClient from './SubjectsPageClient';
+import { generateMeta } from '@/lib/seo';
 
-export const metadata: Metadata = {
-    title: 'All A/L Subjects | ICONIC ACADEMY',
-    description: 'Explore Physics, Chemistry, Biology, and Combined Maths with lessons, past papers, and AI guidance built for Sri Lankan A/L students.',
-    openGraph: {
-        title: 'All A/L Subjects | ICONIC ACADEMY',
-        description: 'Explore Physics, Chemistry, Biology, and Combined Maths with lessons, past papers, and AI guidance built for Sri Lankan A/L students.',
-    },
-};
+export const metadata = generateMeta({
+  title: 'A/L Subjects — Physics, Chemistry, Biology, Maths — Iconic Academy',
+  description:
+    'Complete Sri Lankan A/L syllabus for Physics, Chemistry, Biology, and Combined Maths. Structured lessons with AI guidance.',
+  pathname: '/subjects',
+  keywords: [
+    'A/L subjects Sri Lanka',
+    'A/L Physics',
+    'A/L Chemistry',
+    'A/L Biology',
+    'Combined Maths Sri Lanka',
+  ],
+});
 
 export default function SubjectsPage() {
-    return <SubjectsPageClient />;
+  return <SubjectsPageClient />;
 }

@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, Zap } from 'lucide-react';
+import EarlyAccessBadge from '@/components/conversion/EarlyAccessBadge';
+import WhatsAppFloatingButton from '@/components/conversion/WhatsAppFloatingButton';
 import { SUBJECTS, SYLLABUS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +37,9 @@ export default function SubjectsPageClient() {
               Every unit. Every topic. Every lesson. Built for A/L mastery with AI-powered guidance and
               past papers.
             </p>
+            <div className="mt-4">
+              <EarlyAccessBadge />
+            </div>
           </motion.div>
         </div>
       </section>
@@ -119,6 +124,8 @@ export default function SubjectsPageClient() {
           </div>
         </div>
       </section>
+
+      <WhatsAppFloatingButton message="Hi, I'd like to know more about Iconic Academy" />
     </div>
   );
 }
