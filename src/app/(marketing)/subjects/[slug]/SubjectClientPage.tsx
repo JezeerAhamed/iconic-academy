@@ -10,7 +10,6 @@ import { SUBJECT_MAP } from '@/lib/constants';
 import { getGeneratedLessons } from '@/lib/dashboard-intelligence';
 import { auth, db } from '@/lib/firebase';
 import { ProgressStatus, SubjectId } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface SubjectClientPageProps {
@@ -100,54 +99,44 @@ function normalizeSubject(docId: string, slug: string, rawData: Record<string, u
   };
 }
 
-function getMasterySymbol(status: ProgressStatus | 'not_started') {
+function getMasteryIndicator(status: ProgressStatus | 'not_started') {
   switch (status) {
     case 'mastered':
-      return {
-        symbol: '●',
-        className: 'text-green-400',
-      };
+      return 'w-4 h-4 rounded-full bg-cgreen-500 flex-shrink-0';
     case 'proficient':
-      return {
-        symbol: '◑',
-        className: 'text-amber-400',
-      };
+      return 'w-4 h-4 rounded-full bg-cyellow-400 flex-shrink-0';
     case 'practicing':
-      return {
-        symbol: '◔',
-        className: 'text-sky-400',
-      };
+      return 'w-4 h-4 rounded-full bg-cblue-500 flex-shrink-0';
     default:
-      return {
-        symbol: '○',
-        className: 'text-slate-500',
-      };
+      return 'w-4 h-4 rounded-full border-2 border-cgray-300 flex-shrink-0';
   }
 }
 
 function SubjectLoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#080c14] pb-20 pt-28">
-      <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-        <div className="h-4 w-48 animate-pulse rounded bg-white/10" />
-        <Card className="border-white/10 bg-[#0b101a] py-8">
-          <CardContent className="space-y-5">
-            <div className="h-16 w-16 animate-pulse rounded-2xl bg-white/[0.04]" />
-            <div className="h-12 w-72 animate-pulse rounded bg-white/10" />
-            <div className="h-4 w-[32rem] max-w-full animate-pulse rounded bg-white/5" />
-            <div className="h-4 w-80 animate-pulse rounded bg-white/5" />
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-white pt-16 pb-20">
+      <section className="bg-cgray-50 border-b border-cgray-200 py-16">
+        <div className="c-container flex flex-col gap-8 md:flex-row md:items-start">
+          <div className="flex-1 space-y-4">
+            <div className="h-4 w-28 animate-pulse rounded bg-cgray-100" />
+            <div className="h-10 w-72 animate-pulse rounded bg-cgray-100" />
+            <div className="h-4 w-[32rem] max-w-full animate-pulse rounded bg-cgray-100" />
+            <div className="h-4 w-80 animate-pulse rounded bg-cgray-100" />
+          </div>
+          <div className="h-11 w-40 animate-pulse rounded bg-cgray-100" />
+        </div>
+      </section>
 
-        <div className="space-y-4">
+      <div className="c-container py-16">
+        <div className="mb-4 h-6 w-44 animate-pulse rounded bg-cgray-100" />
+        <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="border-white/10 bg-[#0b101a] py-6">
-              <CardContent className="space-y-4">
-                <div className="h-6 w-56 animate-pulse rounded bg-white/10" />
-                <div className="h-3 w-full animate-pulse rounded-full bg-white/[0.04]" />
-                <div className="h-4 w-48 animate-pulse rounded bg-white/5" />
-              </CardContent>
-            </Card>
+            <div key={index} className="c-card">
+              <div className="space-y-4 p-4">
+                <div className="h-5 w-64 animate-pulse rounded bg-cgray-100" />
+                <div className="h-1 w-full animate-pulse rounded-full bg-cgray-100" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -366,22 +355,20 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
 
   if (!isValidSlug || !subject) {
     return (
-      <div className="min-h-screen bg-[#080c14] pb-20 pt-28">
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <Card className="border-white/10 bg-[#0b101a] py-10">
-            <CardContent className="space-y-4">
-              <h1 className="text-3xl font-black text-white">Subject not found</h1>
-              <p className="mx-auto max-w-xl text-sm leading-6 text-slate-300">
-                We couldn&apos;t find that subject page. Try browsing the available A/L subjects instead.
-              </p>
-              <Link
-                href="/subjects"
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-5 font-semibold text-black transition hover:bg-slate-200"
-              >
-                Browse All Subjects
-              </Link>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-white pt-16 pb-20">
+        <div className="c-container py-16">
+          <div className="c-card p-10 text-center">
+            <h1 className="text-3xl font-bold text-cgray-900">Subject not found</h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-cgray-600">
+              We couldn&apos;t find that subject page. Try browsing the available A/L subjects instead.
+            </p>
+            <Link
+              href="/subjects"
+              className="btn-primary mt-5 inline-flex hover:no-underline"
+            >
+              Browse All Subjects
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -391,173 +378,165 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
 
   return (
     <>
-      <div className="min-h-screen bg-[#080c14] pb-20 pt-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-400">
-            <Link href="/" className="transition hover:text-white">Home</Link>
-            <span>&gt;</span>
-            <Link href="/subjects" className="transition hover:text-white">Subjects</Link>
-            <span>&gt;</span>
-            <Link href={`/subjects/${slug}`} className="font-medium text-white transition hover:text-slate-200">
-              {subject.name}
-            </Link>
-          </nav>
+      <div className="min-h-screen bg-white pt-16 pb-20">
+        <nav className="c-container py-4 flex flex-wrap items-center gap-2 text-sm text-cgray-500">
+          <Link href="/" className="hover:text-cblue-500 hover:no-underline">Home</Link>
+          <span>&gt;</span>
+          <Link href="/subjects" className="hover:text-cblue-500 hover:no-underline">Subjects</Link>
+          <span>&gt;</span>
+          <span className="font-semibold text-cgray-900">{subject.name}</span>
+        </nav>
 
-          <Card className="overflow-hidden border-white/10 bg-[#0b101a] py-8">
-            <CardContent className="space-y-8">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-3xl space-y-5">
-                  <div
-                    className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-lg"
-                    style={{ backgroundColor: `${subject.color}20`, border: `1px solid ${subject.color}35`, color: subject.color }}
-                  >
-                    {subject.icon}
-                  </div>
-
-                  <div className="space-y-3">
-                    <h1 className="text-4xl font-black tracking-tight text-white">{subject.name}</h1>
-                    <p className="text-base leading-7 text-slate-300">{subject.description}</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
-                    <span>{subject.unitCount} Units</span>
-                    <span className="text-slate-600">·</span>
-                    <span>{subject.lessonCount} Lessons</span>
-                    <span className="text-slate-600">·</span>
-                    <span>{formatHours(subject.hours)}</span>
+        <section className="bg-cgray-50 border-b border-cgray-200 py-16">
+          <div className="c-container flex flex-col md:flex-row gap-8 items-start">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-cblue-500 uppercase tracking-wider mb-2">A/L Subject</p>
+              <div className="flex items-start gap-4">
+                <div
+                  className="flex h-16 w-16 items-center justify-center rounded-xl text-3xl flex-shrink-0"
+                  style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
+                >
+                  {subject.icon}
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-3xl md:text-4xl font-bold text-cgray-900 mb-3">{subject.name}</h1>
+                  <p className="text-base text-cgray-600 leading-relaxed mb-4 max-w-2xl">{subject.description}</p>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-cgray-600">
+                    <span className="flex items-center gap-1.5">
+                      <span>{subject.unitCount} Units</span>
+                    </span>
+                    <span className="w-1 h-1 bg-cgray-300 rounded-full" />
+                    <span className="flex items-center gap-1.5">
+                      <span>{subject.lessonCount} Lessons</span>
+                    </span>
+                    <span className="w-1 h-1 bg-cgray-300 rounded-full" />
+                    <span className="flex items-center gap-1.5">
+                      <span>{formatHours(subject.hours)}</span>
+                    </span>
                   </div>
 
                   {user ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-4 text-sm">
-                        <span className="text-slate-300">Overall mastery</span>
-                        <span className="font-semibold text-white">{overallMasteryPercent}%</span>
-                      </div>
-                      <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                    <div className="mt-4 max-w-xs">
+                      <p className="text-sm text-cgray-600 mb-1.5">Overall mastery</p>
+                      <div className="bg-cgray-200 rounded-full h-2 overflow-hidden">
                         <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${overallMasteryPercent}%`,
-                            background: `linear-gradient(90deg, ${subject.color}, #22c55e)`,
-                          }}
+                          className="bg-cblue-500 h-2 rounded-full"
+                          style={{ width: `${overallMasteryPercent}%` }}
                         />
                       </div>
                     </div>
                   ) : null}
+
+                  <Link href={ctaHref} className="btn-primary mt-5 inline-flex hover:no-underline">
+                    Start Learning Free
+                  </Link>
                 </div>
-
-                <Link
-                  href={ctaHref}
-                  className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-black transition hover:bg-slate-200"
-                >
-                  Start Learning Free
-                </Link>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        </section>
 
-          <section className="mt-10 space-y-4">
-            {units.map((unit, index) => {
-              const isExpanded = expandedUnitId === unit.id;
-              const isFreeUnit = index < 2;
-              const isLocked = !isPremium && !isFreeUnit;
-              const masteredLessons = unit.lessons.filter((lesson) => progressByLesson[lesson.id] === 'mastered').length;
-              const unitProgressPercent = unit.lessons.length > 0 ? Math.round((masteredLessons / unit.lessons.length) * 100) : 0;
+        <section className="c-container py-16">
+          <h2 className="text-xl font-semibold text-cgray-900 mb-4">Course Curriculum</h2>
 
-              return (
-                <Card key={unit.id} className="border-white/10 bg-[#0b101a] py-0">
-                  <button
-                    type="button"
-                    onClick={() => handleUnitToggle(unit, index)}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
-                  >
-                    <div className="min-w-0 flex-1 space-y-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-xl font-bold text-white">
-                          Unit {index + 1}: {unit.title}
-                        </h2>
-                        <span
-                          className={[
-                            'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]',
-                            isFreeUnit
-                              ? 'bg-emerald-500/15 text-emerald-300'
-                              : isLocked
-                                ? 'bg-white/[0.06] text-slate-400'
-                                : 'bg-violet-500/15 text-violet-300',
-                          ].join(' ')}
-                        >
-                          {isFreeUnit ? 'Free' : isLocked ? 'Locked' : 'Unlocked'}
+          {units.map((unit, index) => {
+            const isExpanded = expandedUnitId === unit.id;
+            const isFreeUnit = index < 2;
+            const isLocked = !isPremium && !isFreeUnit;
+            const masteredLessons = unit.lessons.filter((lesson) => progressByLesson[lesson.id] === 'mastered').length;
+            const unitProgressPercent = unit.lessons.length > 0 ? Math.round((masteredLessons / unit.lessons.length) * 100) : 0;
+
+            return (
+              <div key={unit.id} className="c-card mb-2 cursor-pointer overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => handleUnitToggle(unit, index)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center justify-between p-4 gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-cgray-100 flex items-center justify-center text-xs font-semibold text-cgray-600 flex-shrink-0">
+                        {index + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-cgray-900 truncate">{unit.title}</p>
+                        <p className="text-sm text-cgray-500 truncate">{unit.description}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isFreeUnit ? (
+                        <span className="c-badge-green mr-2">Free</span>
+                      ) : isLocked ? (
+                        <span className="c-badge-gray mr-2 flex items-center gap-1">
+                          <Lock className="w-3 h-3" />
+                          Locked
                         </span>
-                      </div>
+                      ) : (
+                        <span className="c-badge-gray mr-2">Unlocked</span>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-cgray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
 
-                      <div className="space-y-2">
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="px-4 pb-3">
+                    <div className="bg-cgray-100 rounded-full h-1 overflow-hidden">
+                      <div
+                        className="bg-cblue-500 h-1 rounded-full"
+                        style={{ width: `${unitProgressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                </button>
+
+                {isExpanded ? (
+                  <div className="border-t border-cgray-100 px-4 py-3">
+                    <div className="flex flex-col gap-1">
+                      {unit.lessons.map((lesson) => {
+                        const masteryClass = getMasteryIndicator(progressByLesson[lesson.id] ?? 'not_started');
+
+                        return (
                           <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${unitProgressPercent}%`,
-                              background: `linear-gradient(90deg, ${subject.color}, #22c55e)`,
-                            }}
-                          />
-                        </div>
-                        <p className="text-sm text-slate-400">
-                          {masteredLessons}/{unit.lessons.length} lessons mastered
-                        </p>
-                      </div>
+                            key={lesson.id}
+                            className={`flex items-center gap-3 py-2 rounded px-2 ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-cgray-50 cursor-pointer'}`}
+                          >
+                            <span className={masteryClass} />
+                            <span className="text-sm text-cgray-700 flex-1">{lesson.title}</span>
+                            <span className="text-xs text-cgray-400">{lesson.durationMinutes} min</span>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    <ChevronDown
-                      className={`h-5 w-5 shrink-0 text-slate-400 transition ${isExpanded ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-
-                  {isExpanded ? (
-                    <div className="border-t border-white/10 px-5 py-5">
-                      <div className="space-y-3">
-                        {unit.lessons.map((lesson) => {
-                          const mastery = getMasterySymbol(progressByLesson[lesson.id] ?? 'not_started');
-
-                          return (
-                            <div
-                              key={lesson.id}
-                              className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className={`text-lg ${mastery.className}`}>{mastery.symbol}</span>
-                                <div>
-                                  <p className="font-medium text-white">{lesson.title}</p>
-                                  <p className="text-sm text-slate-500">{lesson.durationMinutes} min</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-4">
-                        <Link
-                          href={user ? `/dashboard/subjects/${slug}/${unit.id}` : '/auth/signup'}
-                          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-black transition hover:bg-slate-200"
-                        >
-                          Start Unit
-                          <PlayCircle className="h-4 w-4" />
-                        </Link>
-                      </div>
+                    <div className="mt-4">
+                      <Link
+                        href={isLocked ? '#' : user ? `/dashboard/subjects/${slug}/${unit.id}` : '/auth/signup'}
+                        className="btn-primary btn-sm inline-flex hover:no-underline"
+                        onClick={(event) => {
+                          if (isLocked) {
+                            event.preventDefault();
+                            setShowUpgradeModal(true);
+                          }
+                        }}
+                      >
+                        Start Unit
+                        <PlayCircle className="w-4 h-4 ml-2" />
+                      </Link>
                     </div>
-                  ) : null}
-                </Card>
-              );
-            })}
-          </section>
-        </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </section>
       </div>
 
       {showUpgradeModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0b101a] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-cgray-900/20 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md c-card p-6">
             <div className="space-y-3">
-              <h2 className="text-2xl font-black text-white">Unlock all units — upgrade to Basic Rs 990/mo</h2>
-              <p className="text-sm leading-6 text-slate-300">
+              <h2 className="text-2xl font-bold text-cgray-900">Unlock all units - upgrade to Basic Rs 990/mo</h2>
+              <p className="text-sm leading-6 text-cgray-600">
                 Units 1 and 2 are free to explore. Upgrade to unlock the full syllabus, guided lessons, and deeper practice.
               </p>
             </div>
@@ -567,14 +546,14 @@ export default function SubjectClientPage({ slug, validSlugs }: SubjectClientPag
                 type="button"
                 variant="outline"
                 onClick={() => setShowUpgradeModal(false)}
-                className="border-white/10 bg-white/[0.03] text-white hover:bg-white/10"
+                className="btn-secondary h-auto"
               >
                 Close
               </Button>
               <Button
                 type="button"
                 onClick={() => router.push('/pricing')}
-                className="bg-white text-black hover:bg-slate-200"
+                className="btn-primary h-auto border-0 shadow-none"
               >
                 Upgrade Now
               </Button>

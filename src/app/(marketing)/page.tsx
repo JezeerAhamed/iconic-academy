@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="hero-gradient grid-bg">
+    <div className="bg-white">
       <HeroSection />
       <StatsSection />
       <SubjectPreview />

@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { ArrowRight, BookOpen, Layers3 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { SUBJECT_MAP, SUBJECTS, SYLLABUS } from '@/lib/constants';
 import { getGeneratedLessons } from '@/lib/dashboard-intelligence';
 import { auth, db } from '@/lib/firebase';
@@ -74,7 +72,7 @@ function normalizeSubject(subjectId: string, rawData: Record<string, unknown>) {
       (typeof rawData.color === 'string' && rawData.color.trim()) ||
       (typeof rawData.colorHex === 'string' && rawData.colorHex.trim()) ||
       fallback?.color ||
-      '#6366f1',
+      '#0056D2',
     unitCount:
       parseNumber(rawData.unitCount) ??
       parseNumber(rawData.totalUnits) ??
@@ -132,43 +130,37 @@ function getSubjectSortIndex(subjectId: string) {
 
 function SubjectsLoadingSkeleton() {
   return (
-    <div className="space-y-6 pb-12">
-      <Card className="border-white/10 bg-[#0b101a] py-6">
-        <CardContent className="space-y-4">
-          <div className="h-4 w-28 animate-pulse rounded bg-white/10" />
-          <div className="h-9 w-72 animate-pulse rounded bg-white/10" />
-          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-white/5" />
-        </CardContent>
-      </Card>
+    <div className="space-y-8 pb-12">
+      <div className="rounded-lg border border-cgray-200 bg-cgray-50 p-6">
+        <div className="space-y-4">
+          <div className="h-4 w-28 animate-pulse rounded bg-cgray-100" />
+          <div className="h-9 w-72 animate-pulse rounded bg-cgray-100" />
+          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-cgray-100" />
+        </div>
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index} className="border-white/10 bg-[#0b101a] py-6">
-            <CardContent className="space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 animate-pulse rounded-2xl bg-white/10" />
-                  <div className="space-y-2">
-                    <div className="h-5 w-32 animate-pulse rounded bg-white/10" />
-                    <div className="h-4 w-24 animate-pulse rounded bg-white/5" />
-                  </div>
+          <div key={index} className="c-card p-4">
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 animate-pulse rounded-lg bg-cgray-100" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-32 animate-pulse rounded bg-cgray-100" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-cgray-100" />
                 </div>
-                <div className="h-6 w-16 animate-pulse rounded-full bg-white/5" />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
-                <div className="h-20 animate-pulse rounded-2xl bg-white/[0.04]" />
-                <div className="h-20 animate-pulse rounded-2xl bg-white/[0.04]" />
+                <div className="h-20 animate-pulse rounded bg-cgray-50" />
+                <div className="h-20 animate-pulse rounded bg-cgray-50" />
               </div>
-
-              <div className="space-y-3">
-                <div className="h-4 w-40 animate-pulse rounded bg-white/5" />
-                <div className="h-2.5 w-full animate-pulse rounded-full bg-white/10" />
+              <div className="space-y-2">
+                <div className="h-2 w-full animate-pulse rounded-full bg-cgray-100" />
+                <div className="h-4 w-40 animate-pulse rounded bg-cgray-100" />
               </div>
-
-              <div className="h-11 w-full animate-pulse rounded-xl bg-white/10" />
-            </CardContent>
-          </Card>
+              <div className="h-10 w-full animate-pulse rounded bg-cgray-100" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -287,13 +279,11 @@ export default function DashboardSubjectsPage() {
   if (error) {
     return (
       <div className="pb-12">
-        <Card className="border-rose-400/20 bg-[#0b101a] py-6">
-          <CardContent className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">Unable to load subjects</p>
-            <h1 className="text-2xl font-black text-white">Something went wrong while loading your dashboard.</h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="c-card p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cred-500">Unable to load subjects</p>
+          <h1 className="mt-2 text-2xl font-bold text-cgray-900">Something went wrong while loading your dashboard.</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-cgray-600">{error}</p>
+        </div>
       </div>
     );
   }
@@ -301,114 +291,108 @@ export default function DashboardSubjectsPage() {
   if (subjects.length === 0) {
     return (
       <div className="pb-12">
-        <Card className="border-white/10 bg-[#0b101a] py-6">
-          <CardContent className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Subjects</p>
-            <h1 className="text-2xl font-black text-white">Your learning dashboard is almost ready.</h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">
-              Your subjects are being set up. Check back soon!
-            </p>
-          </CardContent>
-        </Card>
+        <div className="c-card p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cgray-500">Subjects</p>
+          <h1 className="mt-2 text-2xl font-bold text-cgray-900">Your learning dashboard is almost ready.</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-cgray-600">
+            Your subjects are being set up. Check back soon!
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12">
-      <Card className="border-white/10 bg-[#0b101a] py-6">
-        <CardContent className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-8 pb-12">
+      <div className="rounded-lg border border-cgray-200 bg-cgray-50 p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Your subjects</p>
-            <h1 className="text-3xl font-black tracking-tight text-white">Pick up your A/L learning where you left off.</h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">
+            <p className="text-sm font-semibold text-cblue-500 uppercase tracking-wider">Your Subjects</p>
+            <h1 className="text-3xl font-bold text-cgray-900">Pick up your A/L learning where you left off.</h1>
+            <p className="max-w-2xl text-base leading-relaxed text-cgray-600">
               Every card below is connected to your real lesson progress and points you to the next best place to continue.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Completed lessons</p>
-              <p className="mt-2 text-2xl font-black text-white">{totalCompletedLessons}</p>
+            <div className="c-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-cgray-500">Completed lessons</p>
+              <p className="mt-2 text-2xl font-bold text-cgray-900">{totalCompletedLessons}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Available lessons</p>
-              <p className="mt-2 text-2xl font-black text-white">{totalLessons}</p>
+            <div className="c-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-cgray-500">Available lessons</p>
+              <p className="mt-2 text-2xl font-bold text-cgray-900">{totalLessons}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {subjects.map((subject) => (
-          <Card key={subject.id} className="border-white/10 bg-[#0b101a] py-6">
-            <CardHeader className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-lg"
-                    style={{ backgroundColor: `${subject.color}20`, color: subject.color }}
-                  >
-                    {subject.icon}
-                  </div>
-
-                  <div>
-                    <CardTitle className="text-xl font-bold text-white">{subject.name}</CardTitle>
-                    <p className="mt-1 text-sm text-slate-400">{subject.completedLessons} lessons completed</p>
-                  </div>
+          <div key={subject.id} className="c-card p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-lg text-2xl"
+                  style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
+                >
+                  {subject.icon}
                 </div>
 
-                <span
-                  className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
-                  style={{ backgroundColor: `${subject.color}20`, color: subject.color }}
-                >
-                  {subject.progressPercent}%
+                <div>
+                  <h2 className="text-base font-semibold text-cgray-900">{subject.name}</h2>
+                  <p className="mt-1 text-sm text-cgray-500">{subject.completedLessons} lessons completed</p>
+                </div>
+              </div>
+
+              <span className="c-badge-blue">{subject.progressPercent}%</span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded bg-cgray-50 p-4">
+                <div className="flex items-center gap-2 text-cgray-500">
+                  <Layers3 className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Units</span>
+                </div>
+                <p className="mt-3 text-2xl font-bold text-cgray-900">{subject.unitCount}</p>
+              </div>
+
+              <div className="rounded bg-cgray-50 p-4">
+                <div className="flex items-center gap-2 text-cgray-500">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wider">Lessons</span>
+                </div>
+                <p className="mt-3 text-2xl font-bold text-cgray-900">{subject.lessonCount}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between gap-4 text-sm">
+                <span className="text-cgray-600">Progress</span>
+                <span className="font-semibold text-cgray-900">
+                  {subject.completedLessons} / {subject.lessonCount}
                 </span>
               </div>
-            </CardHeader>
-
-            <CardContent className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Layers3 className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-[0.18em]">Units</span>
-                  </div>
-                  <p className="mt-3 text-2xl font-black text-white">{subject.unitCount}</p>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <BookOpen className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-[0.18em]">Lessons</span>
-                  </div>
-                  <p className="mt-3 text-2xl font-black text-white">{subject.lessonCount}</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-4 text-sm">
-                  <span className="text-slate-300">Progress</span>
-                  <span className="font-semibold text-white">
-                    {subject.completedLessons} / {subject.lessonCount}
-                  </span>
-                </div>
-                <Progress
-                  value={subject.progressPercent}
-                  className="gap-0"
+              <div className="w-full bg-cgray-100 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-cblue-500 h-2 rounded-full"
+                  style={{ width: `${subject.progressPercent}%` }}
                 />
               </div>
+            </div>
 
-              <Link
-                href={subject.ctaHref}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white transition hover:brightness-110"
-                style={{ backgroundColor: subject.color }}
-              >
-                {subject.ctaLabel}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </CardContent>
-          </Card>
+            <Link
+              href={subject.ctaHref}
+              className={`mt-5 inline-flex w-full items-center justify-center gap-2 hover:no-underline ${
+                subject.ctaLabel === 'Continue'
+                  ? 'btn-primary btn-sm'
+                  : 'btn-secondary btn-sm border-cgray-800 text-cgray-900 hover:bg-cgray-50'
+              }`}
+            >
+              {subject.ctaLabel}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         ))}
       </div>
     </div>

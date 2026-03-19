@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { ArrowRight, Clock3, FileText, Lock, Sparkles } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { SUBJECTS } from '@/lib/constants';
 import { auth, db } from '@/lib/firebase';
 
@@ -100,7 +100,7 @@ function normalizePaper(docId: string, rawData: Record<string, unknown>): PastPa
     subjectColor:
       (typeof rawData.subjectColor === 'string' && rawData.subjectColor.trim()) ||
       subject?.color ||
-      '#6366f1',
+      '#0056D2',
     year: parseNumber(rawData.year) || 2023,
     type: normalizePaperType(rawData.type),
     durationText: formatDuration(rawData.duration),
@@ -112,37 +112,37 @@ function normalizePaper(docId: string, rawData: Record<string, unknown>): PastPa
 function PastPapersSkeleton() {
   return (
     <div className="space-y-6 pb-12">
-      <Card className="border-white/10 bg-[#0b101a] py-6">
+      <Card className="c-card py-6">
         <CardContent className="space-y-4">
-          <div className="h-10 w-64 animate-pulse rounded bg-white/10" />
-          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-white/5" />
+          <div className="h-10 w-64 animate-pulse rounded bg-cgray-100" />
+          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-cgray-100" />
           <div className="grid gap-3 lg:grid-cols-[1.4fr_220px_220px]">
-            <div className="h-12 animate-pulse rounded-2xl bg-white/[0.04]" />
-            <div className="h-12 animate-pulse rounded-2xl bg-white/[0.04]" />
-            <div className="h-12 animate-pulse rounded-2xl bg-white/[0.04]" />
+            <div className="h-12 animate-pulse rounded bg-cgray-100" />
+            <div className="h-12 animate-pulse rounded bg-cgray-100" />
+            <div className="h-12 animate-pulse rounded bg-cgray-100" />
           </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, index) => (
-          <Card key={index} className="border-white/10 bg-[#0b101a] py-6">
+          <Card key={index} className="c-card py-6">
             <CardContent className="space-y-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-2">
-                  <div className="h-6 w-16 animate-pulse rounded-full bg-white/10" />
-                  <div className="h-5 w-40 animate-pulse rounded bg-white/10" />
-                  <div className="h-4 w-24 animate-pulse rounded bg-white/5" />
+                  <div className="h-6 w-16 animate-pulse rounded-full bg-cgray-100" />
+                  <div className="h-5 w-40 animate-pulse rounded bg-cgray-100" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-cgray-100" />
                 </div>
-                <div className="h-12 w-12 animate-pulse rounded-2xl bg-white/[0.04]" />
+                <div className="h-12 w-12 animate-pulse rounded bg-cgray-100" />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="h-16 animate-pulse rounded-2xl bg-white/[0.04]" />
-                <div className="h-16 animate-pulse rounded-2xl bg-white/[0.04]" />
+                <div className="h-16 animate-pulse rounded bg-cgray-100" />
+                <div className="h-16 animate-pulse rounded bg-cgray-100" />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="h-11 animate-pulse rounded-xl bg-white/10" />
-                <div className="h-11 animate-pulse rounded-xl bg-white/[0.04]" />
+                <div className="h-11 animate-pulse rounded bg-cgray-100" />
+                <div className="h-11 animate-pulse rounded bg-cgray-100" />
               </div>
             </CardContent>
           </Card>
@@ -228,11 +228,11 @@ export default function PastPapersPage() {
   if (error) {
     return (
       <div className="pb-12">
-        <Card className="border-rose-400/20 bg-[#0b101a] py-6">
+        <Card className="c-card border-cred-500/20 py-6">
           <CardContent className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">Unable to load papers</p>
-            <h1 className="text-2xl font-black text-white">Something went wrong while loading past papers.</h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">{error}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cred-500">Unable to load papers</p>
+            <h1 className="text-2xl font-bold text-cgray-900">Something went wrong while loading past papers.</h1>
+            <p className="max-w-2xl text-sm leading-6 text-cgray-600">{error}</p>
           </CardContent>
         </Card>
       </div>
@@ -242,23 +242,18 @@ export default function PastPapersPage() {
   if (papers.length === 0) {
     return (
       <div className="pb-12">
-        <Card className="border-white/10 bg-[#0b101a] py-8">
-          <CardContent className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/15 text-violet-300">
-              <FileText className="h-8 w-8" />
+        <Card className="c-card py-8">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cgray-100">
+              <FileText className="text-2xl text-cgray-400" />
             </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-black text-white">Past Papers Coming Soon</h1>
-              <p className="max-w-xl text-sm leading-6 text-slate-300">
-                We are uploading past papers from 1995 to 2023. Check back very soon!
-              </p>
-            </div>
-            <Link
-              href="/dashboard/ai-tutor"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 font-semibold text-black transition hover:bg-slate-200"
-            >
+            <h1 className="mb-2 text-lg font-semibold text-cgray-900">Past Papers Coming Soon</h1>
+            <p className="mb-5 max-w-xs text-base text-cgray-500">
+              We are uploading past papers from 1995 to 2023. Check back very soon!
+            </p>
+            <Link href="/dashboard/ai-tutor" className="btn-primary">
               Practice with AI Tutor instead
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </CardContent>
         </Card>
@@ -268,29 +263,27 @@ export default function PastPapersPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <Card className="border-white/10 bg-[#0b101a] py-6">
+      <Card className="c-card py-6">
         <CardContent className="space-y-5">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Past papers</p>
-            <h1 className="text-3xl font-black tracking-tight text-white">Practice real A/L exam papers with clean filters and fast access.</h1>
-            <p className="max-w-3xl text-sm leading-6 text-slate-300">
-              Filter by subject, year, and paper type, then jump straight into exam mode or premium solutions.
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cblue-500">Past papers</p>
+            <h1 className="text-3xl font-bold tracking-tight text-cgray-900">
+              Practice real A/L exam papers with clean filters and fast access.
+            </h1>
+            <p className="max-w-3xl text-sm leading-6 text-cgray-600">
+              Filter by subject, year, and paper type, then jump straight into exam mode or premium
+              solutions.
             </p>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-[1.5fr_220px_220px]">
-            <div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+            <div className="flex flex-wrap gap-2 rounded border border-cgray-200 bg-cgray-50 p-2">
               {SUBJECT_TABS.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setSubjectFilter(tab.id)}
-                  className={[
-                    'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                    subjectFilter === tab.id
-                      ? 'bg-white text-black'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white',
-                  ].join(' ')}
+                  className={subjectFilter === tab.id ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'}
                 >
                   {tab.label}
                 </button>
@@ -298,14 +291,14 @@ export default function PastPapersPage() {
             </div>
 
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Year</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-cgray-500">Year</span>
               <select
                 value={yearFilter}
                 onChange={(event) => setYearFilter(event.target.value as YearFilter)}
-                className="h-12 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-sm font-medium text-white outline-none transition focus:border-violet-400"
+                className="c-input h-12 bg-white"
               >
                 {YEAR_OPTIONS.map((year) => (
-                  <option key={year} value={year} className="bg-[#0b101a] text-white">
+                  <option key={year} value={year}>
                     {year === 'all' ? 'All Years' : year}
                   </option>
                 ))}
@@ -313,14 +306,14 @@ export default function PastPapersPage() {
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Paper type</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-cgray-500">Paper type</span>
               <select
                 value={paperTypeFilter}
                 onChange={(event) => setPaperTypeFilter(event.target.value as PaperTypeFilter)}
-                className="h-12 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-sm font-medium text-white outline-none transition focus:border-violet-400"
+                className="c-input h-12 bg-white"
               >
                 {PAPER_TYPES.map((paperType) => (
-                  <option key={paperType} value={paperType} className="bg-[#0b101a] text-white">
+                  <option key={paperType} value={paperType}>
                     {paperType === 'all' ? 'All' : paperType}
                   </option>
                 ))}
@@ -331,23 +324,21 @@ export default function PastPapersPage() {
       </Card>
 
       {filteredPapers.length === 0 ? (
-        <Card className="border-white/10 bg-[#0b101a] py-8">
-          <CardContent className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/15 text-violet-300">
-              <Sparkles className="h-8 w-8" />
+        <Card className="c-card py-8">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cgray-100">
+              <Sparkles className="text-2xl text-cgray-400" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black text-white">No papers match these filters yet.</h2>
-              <p className="max-w-xl text-sm leading-6 text-slate-300">
-                Try a different subject, year, or paper type to see more papers.
-              </p>
-            </div>
+            <h2 className="mb-2 text-lg font-semibold text-cgray-900">No papers match these filters yet.</h2>
+            <p className="mb-5 max-w-xs text-base text-cgray-500">
+              Try a different subject, year, or paper type to see more papers.
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredPapers.map((paper) => (
-            <Card key={paper.id} className="border-white/10 bg-[#0b101a] py-6">
+            <Card key={paper.id} className="c-card py-6">
               <CardContent className="space-y-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-3">
@@ -359,13 +350,13 @@ export default function PastPapersPage() {
                     </span>
 
                     <div>
-                      <h3 className="text-xl font-bold text-white">{paper.subjectName}</h3>
-                      <p className="mt-1 text-sm text-slate-400">{paper.type === 'Full' ? 'Full Paper' : paper.type}</p>
+                      <h3 className="text-xl font-semibold text-cgray-900">{paper.subjectName}</h3>
+                      <p className="mt-1 text-sm text-cgray-500">{paper.type === 'Full' ? 'Full Paper' : paper.type}</p>
                     </div>
                   </div>
 
                   <div
-                    className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
+                    className="flex h-12 w-12 items-center justify-center rounded-lg text-2xl"
                     style={{ backgroundColor: `${paper.subjectColor}15`, color: paper.subjectColor }}
                   >
                     {paper.subjectIcon}
@@ -373,27 +364,27 @@ export default function PastPapersPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="flex items-center gap-2 text-slate-400">
+                  <div className="rounded border border-cgray-200 bg-cgray-50 p-4">
+                    <div className="flex items-center gap-2 text-cgray-500">
                       <Clock3 className="h-4 w-4" />
                       <span className="text-xs font-semibold uppercase tracking-[0.18em]">Duration</span>
                     </div>
-                    <p className="mt-3 text-lg font-bold text-white">{paper.durationText}</p>
+                    <p className="mt-3 text-lg font-semibold text-cgray-900">{paper.durationText}</p>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <div className="flex items-center gap-2 text-slate-400">
+                  <div className="rounded border border-cgray-200 bg-cgray-50 p-4">
+                    <div className="flex items-center gap-2 text-cgray-500">
                       <FileText className="h-4 w-4" />
                       <span className="text-xs font-semibold uppercase tracking-[0.18em]">Marks</span>
                     </div>
-                    <p className="mt-3 text-lg font-bold text-white">{paper.marks}</p>
+                    <p className="mt-3 text-lg font-semibold text-cgray-900">{paper.marks}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <Link
                     href={`/dashboard/past-papers/${paper.id}/exam`}
-                    className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-slate-200"
+                    className="btn-primary btn-sm justify-center"
                   >
                     Start Exam
                   </Link>
@@ -402,7 +393,7 @@ export default function PastPapersPage() {
                     hasPremiumAccess ? (
                       <Link
                         href={`/dashboard/past-papers/${paper.id}/solutions`}
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/15"
+                        className="btn-secondary btn-sm justify-center"
                       >
                         View Solutions
                       </Link>
@@ -410,7 +401,7 @@ export default function PastPapersPage() {
                       <button
                         type="button"
                         disabled
-                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-slate-400"
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded border border-cgray-200 bg-cgray-50 px-4 text-sm font-semibold text-cgray-400"
                       >
                         <Lock className="h-4 w-4" />
                         View Solutions
@@ -419,7 +410,7 @@ export default function PastPapersPage() {
                   ) : (
                     <Link
                       href={`/dashboard/past-papers/${paper.id}/solutions`}
-                      className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                      className="btn-secondary btn-sm justify-center"
                     >
                       View Solutions
                     </Link>

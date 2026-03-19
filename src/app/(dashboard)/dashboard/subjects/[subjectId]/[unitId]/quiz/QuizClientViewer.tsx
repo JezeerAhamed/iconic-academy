@@ -1,165 +1,149 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Subject } from '@/lib/types';
 import { savePracticeAttempt } from '@/lib/progress';
-import { getUnitProgress } from '@/lib/progress';
 import { ChevronRight, Target, Award, PlayCircle, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { PracticeQuiz, Question } from '@/components/ui/PracticeQuiz';
 
 export default function QuizClientViewer({
-    subject,
-    unit
+  subject,
+  unit,
 }: {
-    subject: Subject;
-    unit: any;
+  subject: Subject;
+  unit: any;
 }) {
-    const { user } = useAuth();
-    const [hasStarted, setHasStarted] = useState(false);
-    const [isComplete, setIsComplete] = useState(false);
-    const [quizScore, setQuizScore] = useState({ score: 0, accuracy: 0 });
+  const { user } = useAuth();
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [quizScore, setQuizScore] = useState({ score: 0, accuracy: 0 });
 
-    // Mock 15 questions for the unit quiz
-    const mockUnitQuestions: Question[] = Array.from({ length: 15 }).map((_, i) => ({
-        id: `uq-${i}`,
-        text: `Which of the following is a key concept related to topic number ${i + 1} in this unit?`,
-        options: [
-            { id: '1', text: `Option A for concept ${i + 1}` },
-            { id: '2', text: `Option B for concept ${i + 1}` },
-            { id: '3', text: `Option C for concept ${i + 1}` },
-            { id: '4', text: `Option D for concept ${i + 1}` },
-        ],
-        correctOptionId: '1', // Simulating an easy mock where 1 is always the correct option.
-        explanation: `This is the comprehensive explanation for concept ${i + 1}. In a real application, this data is fetched from Firestore.`
-    }));
+  const mockUnitQuestions: Question[] = Array.from({ length: 15 }).map((_, i) => ({
+    id: `uq-${i}`,
+    text: `Which of the following is a key concept related to topic number ${i + 1} in this unit?`,
+    options: [
+      { id: '1', text: `Option A for concept ${i + 1}` },
+      { id: '2', text: `Option B for concept ${i + 1}` },
+      { id: '3', text: `Option C for concept ${i + 1}` },
+      { id: '4', text: `Option D for concept ${i + 1}` },
+    ],
+    correctOptionId: '1',
+    explanation: `This is the comprehensive explanation for concept ${i + 1}. In a real application, this data is fetched from Firestore.`,
+  }));
 
-    const handleQuizComplete = async (score: number, accuracy: number) => {
-        setQuizScore({ score, accuracy });
-        setIsComplete(true);
+  const handleQuizComplete = async (score: number, accuracy: number) => {
+    setQuizScore({ score, accuracy });
+    setIsComplete(true);
 
-        if (user) {
-            // Save attempt for the entire unit as a special 'quiz' lesson
-            await savePracticeAttempt(
-                user.uid,
-                subject.id as any,
-                unit.id,
-                'quiz',
-                'final-quiz',
-                score,
-                mockUnitQuestions.length,
-                900 // placeholder time: 15 mins
-            );
-        }
-    };
-
-    if (!hasStarted) {
-        return (
-            <div className="max-w-4xl mx-auto w-full p-6 md:p-12 h-min flex flex-col items-center justify-center text-center mt-12 mb-32">
-                <div className="w-20 h-20 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6">
-                    <Target className="w-10 h-10 text-indigo-400" />
-                </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                    {unit.title} – Final Quiz
-                </h1>
-                <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-                    Test everything you have learned in this unit. You will face 15 questions derived from all lessons. You need to score <strong>at least 80%</strong> to earn the <span className="text-green-400 font-bold decoration-green-400/30 underline decoration-2">Mastered</span> badge for this unit. Good luck!
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <button
-                        onClick={() => setHasStarted(true)}
-                        className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all hover:scale-105 shadow-[0_0_20px_rgba(79,70,229,0.3)] text-lg"
-                    >
-                        <PlayCircle className="w-5 h-5" />
-                        Start Quiz Now
-                    </button>
-                    <Link
-                        href={`/dashboard/subjects/${subject.id}/${unit.id}`}
-                        className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-colors text-lg border border-white/5 border-transparent"
-                    >
-                        Review Lessons First
-                    </Link>
-                </div>
-            </div>
-        );
+    if (user) {
+      await savePracticeAttempt(
+        user.uid,
+        subject.id as any,
+        unit.id,
+        'quiz',
+        'final-quiz',
+        score,
+        mockUnitQuestions.length,
+        900
+      );
     }
+  };
 
+  if (!hasStarted) {
     return (
-        <div className="max-w-4xl mx-auto w-full p-4 md:p-8 space-y-8 pb-32">
-
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <div className="flex items-center text-sm text-slate-400 mb-2 gap-2">
-                        <Link href={`/dashboard/subjects/${subject.id}`} className="hover:text-white transition-colors">
-                            {subject.name}
-                        </Link>
-                        <ChevronRight className="w-3 h-3" />
-                        <Link href={`/dashboard/subjects/${subject.id}/${unit.id}`} className="hover:text-white transition-colors">
-                            {unit.title}
-                        </Link>
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-3 flex items-center gap-3">
-                        <BookOpen className="w-8 h-8 text-indigo-400" />
-                        Unit Quiz
-                    </h1>
-                    <p className="text-slate-400">Answer all questions carefully. Your mastery depends on it!</p>
-                </div>
-            </div>
-
-            {/* Quiz Content */}
-            {!isComplete ? (
-                <div className="mt-8">
-                    <PracticeQuiz
-                        questions={mockUnitQuestions}
-                        onComplete={handleQuizComplete}
-                    />
-                </div>
-            ) : (
-                <div className="bg-[#0b101a] border border-white/5 rounded-2xl p-10 text-center mt-8">
-                    {quizScore.accuracy >= 80 ? (
-                        <>
-                            <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-6">
-                                <Award className="w-12 h-12 text-green-400" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-white mb-4">Unit Mastered! 🏆</h2>
-                            <p className="text-lg text-slate-300 mb-8 max-w-xl mx-auto">
-                                Outstanding performance! You scored {quizScore.score}/{mockUnitQuestions.length} ({quizScore.accuracy}%). You have officially mastered this unit. Keep up the phenomenal work.
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-24 h-24 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-6">
-                                <Award className="w-12 h-12 text-amber-400" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-white mb-4">Good Effort!</h2>
-                            <p className="text-lg text-slate-300 mb-8 max-w-xl mx-auto">
-                                You scored {quizScore.score}/{mockUnitQuestions.length} ({quizScore.accuracy.toFixed(1)}%). Review the missed concepts and try again to achieve the 80% mastery threshold.
-                            </p>
-                        </>
-                    )}
-
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <button
-                            onClick={() => {
-                                setHasStarted(false);
-                                setIsComplete(false);
-                            }}
-                            className="w-full sm:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-colors"
-                        >
-                            Retake Quiz
-                        </button>
-                        <Link
-                            href={`/dashboard/subjects/${subject.id}`}
-                            className="w-full sm:w-auto px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold transition-colors"
-                        >
-                            Return to Course
-                        </Link>
-                    </div>
-                </div>
-            )}
+      <div className="mx-auto mt-12 mb-32 flex max-w-coursera flex-col items-center justify-center px-6 text-center">
+        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-xl bg-cblue-50 text-cblue-500">
+          <Target className="h-10 w-10" />
         </div>
+        <h1 className="mb-6 text-4xl font-bold text-cgray-900 md:text-5xl">{unit.title} - Final Quiz</h1>
+        <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-cgray-600">
+          Test everything you have learned in this unit. You will face 15 questions derived from all
+          lessons. You need to score <strong>at least 80%</strong> to earn the{' '}
+          <span className="font-bold text-cgreen-500 underline decoration-cgreen-500/30 decoration-2">Mastered</span> badge for this unit.
+        </p>
+
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <button onClick={() => setHasStarted(true)} className="btn-primary">
+            <PlayCircle className="mr-2 h-5 w-5" />
+            Start Quiz Now
+          </button>
+          <Link href={`/dashboard/subjects/${subject.id}/${unit.id}`} className="btn-secondary hover:no-underline">
+            Review Lessons First
+          </Link>
+        </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="mx-auto max-w-coursera px-6 pb-16">
+      <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-sm text-cgray-500">
+            <Link href={`/dashboard/subjects/${subject.id}`} className="hover:text-cblue-500 hover:no-underline">
+              {subject.name}
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <Link href={`/dashboard/subjects/${subject.id}/${unit.id}`} className="hover:text-cblue-500 hover:no-underline">
+              {unit.title}
+            </Link>
+          </div>
+          <h1 className="mb-3 flex items-center gap-3 text-3xl font-bold text-cgray-900">
+            <BookOpen className="h-8 w-8 text-cblue-500" />
+            Unit Quiz
+          </h1>
+          <p className="text-cgray-600">Answer all questions carefully. Your mastery depends on it.</p>
+        </div>
+      </div>
+
+      {!isComplete ? (
+        <div className="mt-8">
+          <PracticeQuiz questions={mockUnitQuestions} onComplete={handleQuizComplete} />
+        </div>
+      ) : (
+        <div className="c-card mt-8 p-10 text-center">
+          {quizScore.accuracy >= 80 ? (
+            <>
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-cgreen-50 text-cgreen-500">
+                <Award className="h-12 w-12" />
+              </div>
+              <h2 className="mb-4 text-3xl font-bold text-cgray-900">Unit Mastered!</h2>
+              <p className="mx-auto mb-8 max-w-xl text-lg text-cgray-600">
+                Outstanding performance! You scored {quizScore.score}/{mockUnitQuestions.length} ({quizScore.accuracy}%).
+                You have officially mastered this unit.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-cyellow-50 text-cyellow-500">
+                <Award className="h-12 w-12" />
+              </div>
+              <h2 className="mb-4 text-3xl font-bold text-cgray-900">Good Effort!</h2>
+              <p className="mx-auto mb-8 max-w-xl text-lg text-cgray-600">
+                You scored {quizScore.score}/{mockUnitQuestions.length} ({quizScore.accuracy.toFixed(1)}%).
+                Review the missed concepts and try again to achieve the 80% mastery threshold.
+              </p>
+            </>
+          )}
+
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <button
+              onClick={() => {
+                setHasStarted(false);
+                setIsComplete(false);
+              }}
+              className="btn-primary"
+            >
+              Retake Quiz
+            </button>
+            <Link href={`/dashboard/subjects/${subject.id}`} className="btn-secondary hover:no-underline">
+              Return to Course
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

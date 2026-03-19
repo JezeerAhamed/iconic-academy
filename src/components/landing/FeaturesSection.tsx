@@ -85,52 +85,45 @@ export default function FeaturesSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section ref={ref} className="section-pad bg-[#060a11]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section ref={ref} className="bg-white border-t border-cgray-200 py-16">
+      <div className="c-container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="mb-16 text-center"
+          className="text-center mb-12"
         >
-          <span className="mb-4 inline-block rounded-full border border-white/10 px-4 py-1.5 text-sm font-medium text-indigo-400 glass">
+          <span className="text-sm font-semibold text-cblue-500 uppercase tracking-wider mb-3 inline-block">
             Built Different
           </span>
-          <h2 className="mb-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
-            Everything You Need to <span className="gradient-text">Score an A</span>
+          <h2 className="text-3xl font-bold text-cgray-900 mb-3">
+            Everything You Need to Score an A
           </h2>
-          <p className="mx-auto max-w-xl text-slate-400">
+          <p className="text-base text-cgray-600 max-w-2xl mx-auto">
             Not just video lessons - a complete AI-powered learning system that adapts to your needs.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.07 }}
-              whileHover={{ y: -4, scale: 1.02 }}
-              className="group cursor-default rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition-all duration-300 hover:border-white/10"
+              className="flex flex-col gap-3 p-4"
             >
               <div
-                className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
-                style={{ background: `${feature.color}15`, color: feature.color, border: `1px solid ${feature.color}25` }}
+                className="w-10 h-10 rounded-lg bg-cblue-50 flex items-center justify-center flex-shrink-0 text-cblue-500"
               >
                 {feature.icon}
               </div>
 
-              {feature.title !== 'Voice AI Tutoring' ? (
-                <span
-                  className="mb-3 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                  style={{ background: `${feature.color}15`, color: feature.color }}
-                >
-                  {feature.tag}
-                </span>
-              ) : null}
+              <span className="text-xs font-semibold text-cblue-600 uppercase tracking-wider">
+                {feature.tag}
+              </span>
 
-              <h3 className="mb-2 text-base font-semibold text-white">{feature.title}</h3>
-              <p className="text-sm leading-relaxed text-slate-400">{feature.description}</p>
+              <h3 className="text-base font-semibold text-cgray-900 leading-snug">{feature.title}</h3>
+              <p className="text-sm text-cgray-600 leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>

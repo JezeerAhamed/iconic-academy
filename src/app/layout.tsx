@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "@/components/Providers";
 import TopNavbar from "@/components/layout/TopNavbar";
 
-const inter = Inter({
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "600", "700"],
+  variable: "--font-source-sans",
   display: "swap",
 });
 
@@ -63,7 +64,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#080c14",
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -75,12 +76,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body className={`${inter.variable} antialiased bg-[#080c14] text-slate-100`}>
+    <html lang="en" className={sourceSans.variable} suppressHydrationWarning>
+      <body className={`${sourceSans.className} antialiased`}>
         <Providers>
           <TopNavbar />
           <main className="min-h-screen">{children}</main>

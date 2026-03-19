@@ -9,10 +9,10 @@ import {
   BadgeCheck,
   BookOpen,
   BrainCircuit,
-  Circle,
+  Check,
   Crown,
   Flame,
-  Medal,
+  Lock,
   Rocket,
   Shield,
   Sparkles,
@@ -22,8 +22,6 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { auth, db } from '@/lib/firebase';
 
 const SRI_LANKA_TIME_ZONE = 'Asia/Colombo';
@@ -88,7 +86,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'First Steps',
     requirement: 'Complete your first lesson',
     icon: Star,
-    accentClass: 'text-violet-300',
+    accentClass: 'text-cblue-500',
     aliases: ['first_steps', 'first-steps', 'first steps', 'firststeps'],
   },
   {
@@ -96,7 +94,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Week Warrior',
     requirement: 'Maintain a 7-day streak',
     icon: Flame,
-    accentClass: 'text-orange-300',
+    accentClass: 'text-orange-500',
     aliases: ['week_warrior', 'week-warrior', 'week warrior', 'weekwarrior'],
   },
   {
@@ -104,7 +102,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Sharpshooter',
     requirement: 'Get 100% accuracy in a session',
     icon: Target,
-    accentClass: 'text-amber-300',
+    accentClass: 'text-cyellow-500',
     aliases: ['sharpshooter', 'sharp_shooter', 'sharp-shooter'],
   },
   {
@@ -112,7 +110,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Speed Demon',
     requirement: 'Complete 3 lessons in one day',
     icon: Zap,
-    accentClass: 'text-rose-300',
+    accentClass: 'text-cblue-500',
     aliases: ['speed_demon', 'speed-demon', 'speed demon', 'speeddemon'],
   },
   {
@@ -120,7 +118,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Perfect Paper',
     requirement: 'Score 90%+ on a past paper',
     icon: Award,
-    accentClass: 'text-emerald-300',
+    accentClass: 'text-cgreen-500',
     aliases: ['perfect_paper', 'perfect-paper', 'perfect paper', 'perfectpaper'],
   },
   {
@@ -128,7 +126,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Einstein',
     requirement: 'Complete all Physics units',
     icon: BrainCircuit,
-    accentClass: 'text-sky-300',
+    accentClass: 'text-cblue-500',
     aliases: ['einstein'],
   },
   {
@@ -136,7 +134,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Organic Master',
     requirement: 'Score 80%+ in Chemistry',
     icon: Shield,
-    accentClass: 'text-cyan-300',
+    accentClass: 'text-cgreen-500',
     aliases: ['organic_master', 'organic-master', 'organic master', 'organicmaster'],
   },
   {
@@ -144,7 +142,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Island Ranker',
     requirement: 'Reach Level 9',
     icon: Crown,
-    accentClass: 'text-fuchsia-300',
+    accentClass: 'text-cblue-500',
     aliases: ['island_ranker', 'island-ranker', 'island ranker', 'islandranker'],
   },
   {
@@ -152,7 +150,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Helpful Peer',
     requirement: 'Answer a forum question',
     icon: Users,
-    accentClass: 'text-pink-300',
+    accentClass: 'text-cblue-500',
     aliases: ['helpful_peer', 'helpful-peer', 'helpful peer', 'helpfulpeer'],
   },
   {
@@ -160,7 +158,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Bilingual Scholar',
     requirement: 'Use Tamil mode for 7 days',
     icon: BookOpen,
-    accentClass: 'text-teal-300',
+    accentClass: 'text-cblue-500',
     aliases: ['bilingual_scholar', 'bilingual-scholar', 'bilingual scholar', 'bilingualscholar'],
   },
   {
@@ -168,7 +166,7 @@ const BADGES: BadgeDefinition[] = [
     title: 'Comeback Kid',
     requirement: 'Return after missing a week',
     icon: Rocket,
-    accentClass: 'text-lime-300',
+    accentClass: 'text-cblue-500',
     aliases: ['comeback_kid', 'comeback-kid', 'comeback kid', 'comebackkid'],
   },
 ];
@@ -346,48 +344,51 @@ function readGamificationSnapshot(data: Record<string, unknown> | undefined): Ga
 function AchievementsLoadingSkeleton() {
   return (
     <div className="space-y-6 pb-12">
-      <Card className="border-white/10 bg-[#0b101a] py-6">
-        <CardContent className="space-y-6">
-          <div className="mx-auto h-4 w-28 animate-pulse rounded bg-white/10" />
-          <div className="mx-auto h-14 w-56 animate-pulse rounded bg-white/10" />
-          <div className="mx-auto h-4 w-72 animate-pulse rounded bg-white/5" />
-          <div className="mx-auto h-3 w-full max-w-xl animate-pulse rounded-full bg-white/10" />
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-white/10 bg-[#0b101a] py-6">
-          <CardContent className="space-y-4">
-            <div className="h-6 w-40 animate-pulse rounded bg-white/10" />
-            <div className="h-12 w-48 animate-pulse rounded bg-white/5" />
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 7 }).map((_, index) => (
-                <div key={index} className="h-14 animate-pulse rounded-2xl bg-white/[0.04]" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/10 bg-[#0b101a] py-6">
-          <CardContent className="space-y-4">
-            <div className="h-6 w-36 animate-pulse rounded bg-white/10" />
-            {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="h-14 animate-pulse rounded-2xl bg-white/[0.04]" />
-            ))}
-          </CardContent>
-        </Card>
+      <div className="mb-8 space-y-3">
+        <div className="h-8 w-56 animate-pulse rounded bg-cgray-100" />
+        <div className="h-5 w-80 animate-pulse rounded bg-cgray-100" />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="c-card p-6 mb-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="h-8 w-40 animate-pulse rounded bg-cgray-100" />
+            <div className="h-10 w-28 animate-pulse rounded bg-cgray-100" />
+          </div>
+          <div className="h-3 w-full animate-pulse rounded-full bg-cgray-100" />
+          <div className="flex gap-2 overflow-hidden">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className="h-14 w-10 animate-pulse rounded bg-cgray-50" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="c-card p-5 mb-6">
+        <div className="flex items-center gap-5">
+          <div className="h-14 w-14 animate-pulse rounded-xl bg-cgray-100" />
+          <div className="flex-1 space-y-3">
+            <div className="h-8 w-36 animate-pulse rounded bg-cgray-100" />
+            <div className="h-4 w-48 animate-pulse rounded bg-cgray-100" />
+            <div className="flex gap-2">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <div key={index} className="h-8 w-8 animate-pulse rounded bg-cgray-100" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: BADGES.length }).map((_, index) => (
-          <Card key={index} className="border-white/10 bg-[#0b101a] py-6">
-            <CardContent className="space-y-4">
-              <div className="h-12 w-12 animate-pulse rounded-2xl bg-white/10" />
-              <div className="h-5 w-32 animate-pulse rounded bg-white/10" />
-              <div className="h-4 w-full animate-pulse rounded bg-white/5" />
-              <div className="h-4 w-3/4 animate-pulse rounded bg-white/5" />
-            </CardContent>
-          </Card>
+          <div key={index} className="c-card p-4">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="h-14 w-14 animate-pulse rounded-xl bg-cgray-100" />
+              <div className="h-4 w-24 animate-pulse rounded bg-cgray-100" />
+              <div className="h-4 w-full animate-pulse rounded bg-cgray-100" />
+              <div className="h-4 w-20 animate-pulse rounded bg-cgray-100" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -456,13 +457,11 @@ export default function AchievementsPage() {
   if (error) {
     return (
       <div className="pb-12">
-        <Card className="border-rose-400/20 bg-[#0b101a] py-6">
-          <CardContent className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">Unable to load achievements</p>
-            <h1 className="text-2xl font-black text-white">Something went wrong while loading your rewards.</h1>
-            <p className="max-w-2xl text-sm leading-6 text-slate-300">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="c-card p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cred-500">Unable to load achievements</p>
+          <h1 className="mt-2 text-2xl font-bold text-cgray-900">Something went wrong while loading your rewards.</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-cgray-600">{error}</p>
+        </div>
       </div>
     );
   }
@@ -473,212 +472,158 @@ export default function AchievementsPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <Card className="overflow-hidden border-white/10 bg-[#0b101a] py-6">
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-80 bg-[radial-gradient(circle_at_top_right,rgba(250,204,21,0.18),transparent_60%)]" />
-        <CardContent className="relative space-y-6">
-          <div className="flex flex-col items-center justify-center text-center">
-            <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
-              <Trophy className="h-8 w-8" />
-            </span>
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Current level</p>
-            <h1 className="mt-3 text-5xl font-black text-white">Level {levelProgress.current.level}</h1>
-            <p className="mt-2 text-xl font-semibold text-amber-300">{levelProgress.current.rank}</p>
-          </div>
-
-          <div className="mx-auto max-w-2xl space-y-3">
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-slate-400">
-                {snapshot.xpTotal.toLocaleString()} XP
-              </span>
-              <span className="font-semibold text-white">
-                {levelProgress.next
-                  ? `${snapshot.xpTotal.toLocaleString()} / ${levelProgress.next.threshold.toLocaleString()} XP`
-                  : `${snapshot.xpTotal.toLocaleString()} XP`}
-              </span>
-            </div>
-
-            <Progress value={levelProgress.progressPercent} className="gap-0" />
-
-            <p className="text-center text-sm text-slate-300">
-              {levelProgress.next
-                ? `${levelProgress.remainingXp.toLocaleString()} XP until next level`
-                : 'You have reached the highest level.'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-white/10 bg-[#0b101a] py-6">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-300">
-                <Flame className="h-5 w-5" />
-              </span>
-              <div>
-                <CardTitle className="text-xl font-semibold text-white">Streak</CardTitle>
-                <p className="text-sm text-slate-400">Your weekly consistency at a glance.</p>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-5">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Current streak</p>
-                <p className="mt-3 text-3xl font-black text-white">{snapshot.currentStreak}</p>
-                <p className="mt-1 text-sm text-slate-400">days</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Longest streak</p>
-                <p className="mt-3 text-3xl font-black text-white">{snapshot.longestStreak}</p>
-                <p className="mt-1 text-sm text-slate-400">days</p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="grid grid-cols-7 gap-2">
-                {weekStrip.map((day) => (
-                  <div key={day.key} className="flex flex-col items-center gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{day.label}</span>
-                    <div
-                      className={[
-                        'flex h-10 w-10 items-center justify-center rounded-full border text-xs font-semibold transition',
-                        day.studied
-                          ? 'border-emerald-400/30 bg-emerald-500/20 text-emerald-300'
-                          : 'border-white/10 bg-white/[0.03] text-slate-500',
-                        day.isToday ? 'ring-2 ring-violet-400/30' : '',
-                      ].join(' ')}
-                      title={day.shortDate}
-                    >
-                      {day.studied ? <BadgeCheck className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
-                    </div>
-                    <span className="text-[11px] text-slate-500">{day.shortDate}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/10 bg-[#0b101a] py-6">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
-                <Medal className="h-5 w-5" />
-              </span>
-              <div>
-                <CardTitle className="text-xl font-semibold text-white">Level ladder</CardTitle>
-                <p className="text-sm text-slate-400">All ten milestones from Beginner to Legend.</p>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3">
-            {LEVELS.map((level) => {
-              const isCurrent = level.level === levelProgress.current.level;
-              const isPassed = level.level < levelProgress.current.level;
-
-              return (
-                <div
-                  key={level.level}
-                  className={[
-                    'flex items-center justify-between rounded-2xl border p-4',
-                    isCurrent
-                      ? 'border-amber-400/30 bg-amber-400/10'
-                      : isPassed
-                        ? 'border-emerald-500/20 bg-emerald-500/10'
-                        : 'border-white/10 bg-white/[0.03]',
-                  ].join(' ')}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={[
-                        'inline-flex h-10 w-10 items-center justify-center rounded-full',
-                        isCurrent
-                          ? 'bg-amber-400/20 text-amber-300'
-                          : isPassed
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-white/10 text-slate-500',
-                      ].join(' ')}
-                    >
-                      {isPassed ? <BadgeCheck className="h-5 w-5" /> : isCurrent ? <Trophy className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
-                    </span>
-
-                    <div>
-                      <p className="font-semibold text-white">
-                        Level {level.level}: {level.rank}
-                      </p>
-                      <p className="text-sm text-slate-400">{level.threshold.toLocaleString()} XP</p>
-                    </div>
-                  </div>
-
-                  {isCurrent ? <span className="text-sm font-semibold text-amber-300">Current</span> : null}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-cgray-900">Achievements & Progress</h1>
+        <p className="text-base text-cgray-600 mt-1">
+          Track your level, streaks, and unlocked milestones as your A/L journey moves forward.
+        </p>
       </div>
 
-      <Card className="border-white/10 bg-[#0b101a] py-6">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
-              <Sparkles className="h-5 w-5" />
-            </span>
+      <div className="c-card p-6 mb-6">
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-cblue-50 rounded text-cblue-600 font-semibold text-sm">
+            <Trophy className="h-4 w-4" />
+            <span>Level {levelProgress.current.level} {levelProgress.current.rank}</span>
+          </div>
+          <div className="text-2xl font-bold text-cgray-900">{snapshot.xpTotal.toLocaleString()} XP</div>
+        </div>
+
+        <div className="flex justify-between text-sm text-cgray-500 mb-2">
+          <span>
+            {levelProgress.next
+              ? `${levelProgress.current.rank} to ${levelProgress.next.rank}`
+              : 'Highest level reached'}
+          </span>
+          <span>
+            {levelProgress.next
+              ? `${snapshot.xpTotal.toLocaleString()} / ${levelProgress.next.threshold.toLocaleString()} XP`
+              : `${snapshot.xpTotal.toLocaleString()} XP`}
+          </span>
+        </div>
+
+        <div className="w-full bg-cgray-100 rounded-full h-3 overflow-hidden">
+          <div
+            className="bg-cblue-500 h-3 rounded-full transition-all duration-700"
+            style={{ width: `${levelProgress.progressPercent}%` }}
+          />
+        </div>
+
+        <p className="mt-3 text-sm text-cgray-500">
+          {levelProgress.next
+            ? `${levelProgress.remainingXp.toLocaleString()} XP until next level`
+            : 'You have reached the highest level.'}
+        </p>
+
+        <div className="flex items-center gap-1 mt-4 overflow-x-auto pb-2">
+          {LEVELS.map((level, index) => {
+            const isCompleted = level.level < levelProgress.current.level;
+            const isCurrent = level.level === levelProgress.current.level;
+
+            return (
+              <div key={level.level} className="flex items-start">
+                <div className="flex flex-col items-center gap-1 flex-shrink-0 min-w-[52px]">
+                  {isCompleted ? (
+                    <div className="w-6 h-6 rounded-full bg-cblue-500 flex items-center justify-center">
+                      <Check className="text-white w-3 h-3" />
+                    </div>
+                  ) : isCurrent ? (
+                    <div className="w-7 h-7 rounded-full border-2 border-cblue-500 bg-white flex items-center justify-center">
+                      <span className="text-cblue-500 text-xs font-bold">{level.level}</span>
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-cgray-100 flex items-center justify-center">
+                      <span className="text-cgray-400 text-[10px] font-bold">{level.level}</span>
+                    </div>
+                  )}
+                  <span className="text-[9px] text-cgray-500 whitespace-nowrap">{level.rank}</span>
+                </div>
+
+                {index < LEVELS.length - 1 ? (
+                  <div
+                    className={`w-4 h-0.5 flex-shrink-0 mt-3 ${isCompleted ? 'bg-cblue-500' : 'bg-cgray-200'}`}
+                  />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="c-card p-5 mb-6 flex items-start gap-5">
+        <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+          <Flame className="text-orange-500 w-8 h-8" />
+        </div>
+
+        <div className="flex-1">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <CardTitle className="text-xl font-semibold text-white">Badges</CardTitle>
-              <p className="text-sm text-slate-400">Unlocked badges stay full color. Locked badges show the exact requirement.</p>
+              <div className="text-3xl font-bold text-cgray-900">{snapshot.currentStreak} days</div>
+              <div className="text-sm text-cgray-500">Current streak</div>
+              <div className="text-xs text-cgray-400 mt-0.5">Personal best: {snapshot.longestStreak} days</div>
+            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-cgray-50 text-sm text-cgray-600">
+              <BadgeCheck className="w-4 h-4 text-cblue-500" />
+              Keep the streak alive today
             </div>
           </div>
-        </CardHeader>
 
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {BADGES.map((badge) => {
-              const unlocked = unlockedBadgeIds.has(badge.id);
+          <div className="flex items-center gap-1.5 mt-3 overflow-x-auto">
+            {weekStrip.map((day) => {
+              const cellClass = day.isToday
+                ? 'w-8 h-8 rounded border-2 border-cblue-500 bg-cblue-25 flex items-center justify-center'
+                : day.studied
+                  ? 'w-8 h-8 rounded bg-cblue-500 flex items-center justify-center'
+                  : 'w-8 h-8 rounded bg-cgray-100 flex items-center justify-center';
+              const textClass = day.isToday
+                ? 'text-cblue-500 text-xs font-semibold'
+                : day.studied
+                  ? 'text-white text-xs font-semibold'
+                  : 'text-cgray-400 text-xs';
 
               return (
-                <div
-                  key={badge.id}
-                  className={[
-                    'rounded-3xl border p-5 transition',
-                    unlocked
-                      ? 'border-white/10 bg-white/[0.03]'
-                      : 'border-white/10 bg-black/20 grayscale',
-                  ].join(' ')}
-                >
-                  <div className="flex items-start gap-4">
-                    <span
-                      className={[
-                        'inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.06]',
-                        unlocked ? badge.accentClass : 'text-slate-500',
-                      ].join(' ')}
-                    >
-                      <badge.icon className="h-6 w-6" />
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{badge.title}</h3>
-                          <p className="mt-2 text-sm text-slate-400">
-                            {unlocked ? 'Unlocked' : badge.requirement}
-                          </p>
-                        </div>
-
-                        {unlocked ? <BadgeCheck className="mt-0.5 h-5 w-5 text-emerald-300" /> : null}
-                      </div>
-                    </div>
+                <div key={day.key} className="flex flex-col items-center gap-1">
+                  <div className={cellClass} title={day.shortDate}>
+                    <span className={textClass}>{day.label.slice(0, 1)}</span>
                   </div>
+                  <span className="text-[10px] text-cgray-400">{day.label}</span>
                 </div>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        {BADGES.map((badge) => {
+          const unlocked = unlockedBadgeIds.has(badge.id);
+
+          return (
+            <div
+              key={badge.id}
+              className={`c-card p-4 flex flex-col items-center text-center gap-2 ${unlocked ? '' : 'opacity-50 grayscale'}`}
+            >
+              <div className="relative">
+                <div className="w-14 h-14 rounded-xl bg-cblue-50 flex items-center justify-center">
+                  <badge.icon className={`w-7 h-7 ${unlocked ? badge.accentClass : 'text-cgray-400'}`} />
+                </div>
+                {!unlocked ? (
+                  <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-cgray-300 rounded-full flex items-center justify-center">
+                    <Lock className="text-white w-2.5 h-2.5" />
+                  </span>
+                ) : null}
+              </div>
+
+              <p className="text-sm font-semibold text-cgray-900">{badge.title}</p>
+              <p className="text-xs text-cgray-500 leading-snug">{badge.requirement}</p>
+              {unlocked ? (
+                <p className="text-xs text-cgreen-500 font-semibold">Unlocked</p>
+              ) : (
+                <p className="text-xs text-cgray-400">Requirement not met yet</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

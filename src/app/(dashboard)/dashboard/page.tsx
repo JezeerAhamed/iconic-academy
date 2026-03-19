@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { ArrowRight, BookOpen, Flame, GraduationCap, Sparkles, Target, Trophy } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { auth, db } from '@/lib/firebase';
 import { SUBJECT_MAP, SYLLABUS } from '@/lib/constants';
@@ -72,6 +71,27 @@ const LEVELS = [
   { level: 8, label: 'Ranker', threshold: 35000 },
   { level: 9, label: 'Island Ranker', threshold: 60000 },
   { level: 10, label: 'Legend', threshold: 100000 },
+] as const;
+
+const QUICK_ACTIONS = [
+  {
+    title: 'AI Tutor',
+    description: 'Ask for step-by-step explanations whenever you get stuck.',
+    href: '/dashboard/ai-tutor',
+    icon: Sparkles,
+  },
+  {
+    title: 'Past Papers',
+    description: 'Jump into timed practice and review past paper solutions.',
+    href: '/dashboard/past-papers',
+    icon: Target,
+  },
+  {
+    title: 'Achievements',
+    description: 'Track your level, streak, and unlocked milestones.',
+    href: '/dashboard/achievements',
+    icon: Trophy,
+  },
 ] as const;
 
 function getGreeting(now = new Date()) {
@@ -171,36 +191,66 @@ function resolveSubjectCard(params: {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 pb-12">
-      <Card className="border-white/10 bg-[#0b101a] p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 animate-pulse rounded-full bg-white/10" />
-            <div className="space-y-3">
-              <div className="h-5 w-32 animate-pulse rounded bg-white/10" />
-              <div className="h-10 w-64 animate-pulse rounded bg-white/10" />
-              <div className="h-4 w-40 animate-pulse rounded bg-white/5" />
-            </div>
+    <div className="space-y-8 pb-12">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 animate-pulse rounded-full bg-cgray-100" />
+          <div className="space-y-3">
+            <div className="h-8 w-56 animate-pulse rounded bg-cgray-100" />
+            <div className="h-5 w-64 animate-pulse rounded bg-cgray-100" />
           </div>
-          <div className="h-12 w-44 animate-pulse rounded-xl bg-white/[0.04]" />
         </div>
-      </Card>
+        <div className="h-10 w-32 animate-pulse rounded bg-cgray-100" />
+      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
         {Array.from({ length: 5 }).map((_, index) => (
-          <Card key={index} className="h-32 animate-pulse border-white/10 bg-[#0b101a]" />
+          <div key={index} className="c-card h-32 p-4">
+            <div className="h-full animate-pulse rounded bg-cgray-50" />
+          </div>
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="h-56 animate-pulse border-white/10 bg-[#0b101a]" />
-        <Card className="h-56 animate-pulse border-white/10 bg-[#0b101a]" />
+      <div className="c-card p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+          <div className="h-16 w-1.5 animate-pulse rounded-full bg-cgray-100" />
+          <div className="flex-1 space-y-3">
+            <div className="h-3 w-28 animate-pulse rounded bg-cgray-100" />
+            <div className="h-6 w-72 animate-pulse rounded bg-cgray-100" />
+            <div className="h-4 w-48 animate-pulse rounded bg-cgray-100" />
+          </div>
+          <div className="h-10 w-28 animate-pulse rounded bg-cgray-100" />
+        </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index} className="h-44 animate-pulse border-white/10 bg-[#0b101a]" />
-        ))}
+      <div className="c-card p-5">
+        <div className="space-y-3">
+          <div className="h-6 w-48 animate-pulse rounded bg-cgray-100" />
+          <div className="h-4 w-80 animate-pulse rounded bg-cgray-100" />
+          <div className="h-10 w-40 animate-pulse rounded bg-cgray-100" />
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-4 h-6 w-40 animate-pulse rounded bg-cgray-100" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="c-card h-44 p-4">
+              <div className="h-full animate-pulse rounded bg-cgray-50" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-4 h-6 w-36 animate-pulse rounded bg-cgray-100" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="c-card h-36 p-5">
+              <div className="h-full animate-pulse rounded bg-cgray-50" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -355,9 +405,9 @@ export default function DashboardOverview() {
 
   if (!dashboardState) {
     return (
-      <Card className="border-white/10 bg-[#0b101a] p-6 text-slate-300">
+      <div className="c-card p-6 text-cgray-700">
         We could not load your dashboard right now. Please refresh and try again.
-      </Card>
+      </div>
     );
   }
 
@@ -369,243 +419,208 @@ export default function DashboardOverview() {
         ? `${dashboardState.xpToNext.toLocaleString()} XP away`
         : 'Max level reached',
       icon: Sparkles,
-      accent: 'text-violet-300',
     },
     {
       label: 'Level',
       value: `${dashboardState.level}`,
       detail: dashboardState.levelLabel,
-      icon: Trophy,
-      accent: 'text-amber-300',
+      icon: GraduationCap,
     },
     {
       label: 'Streak',
       value: `${dashboardState.currentStreak}`,
       detail: 'current days',
       icon: Flame,
-      accent: 'text-orange-300',
     },
     {
       label: 'Lessons',
       value: `${dashboardState.lessonsCompleted}`,
       detail: 'completed',
       icon: BookOpen,
-      accent: 'text-emerald-300',
     },
     {
       label: 'Accuracy',
       value: dashboardState.averageAccuracy !== null ? `${dashboardState.averageAccuracy}%` : 'No data yet',
       detail: dashboardState.averageAccuracy !== null ? 'average accuracy' : 'no lessons attempted',
       icon: Target,
-      accent: 'text-cyan-300',
     },
   ];
 
   return (
-    <div className="space-y-6 pb-12">
-      <Card className="overflow-hidden border-white/10 bg-[#0b101a] p-6">
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-80 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.18),transparent_60%)]" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            {dashboardState.photoURL ? (
-              <img
-                src={dashboardState.photoURL}
-                alt={dashboardState.displayName}
-                className="h-16 w-16 rounded-full border border-white/10 object-cover"
-              />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 text-lg font-black text-white">
-                {getInitials(dashboardState.displayName)}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
-                <GraduationCap className="h-3.5 w-3.5" />
-                {dashboardState.greeting}
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-white">
-                {dashboardState.greeting}, {dashboardState.firstName}!
-              </h1>
-              <p className="text-sm text-slate-400">
-                Level {dashboardState.level} {dashboardState.levelLabel} with {dashboardState.xpTotal.toLocaleString()} XP.
-              </p>
+    <div className="space-y-8 pb-12">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          {dashboardState.photoURL ? (
+            <img
+              src={dashboardState.photoURL}
+              alt={dashboardState.displayName}
+              className="h-14 w-14 rounded-full border border-cgray-200 object-cover"
+            />
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-cblue-500 text-sm font-bold text-white">
+              {getInitials(dashboardState.displayName)}
             </div>
+          )}
+
+          <div>
+            <h1 className="text-2xl font-bold text-cgray-900">
+              {dashboardState.greeting}, {dashboardState.firstName}!
+            </h1>
+            <p className="mt-1 text-base text-cgray-600">
+              Level {dashboardState.level} {dashboardState.levelLabel} with {dashboardState.xpTotal.toLocaleString()} XP.
+            </p>
           </div>
-
-          <Link href={dashboardState.continueHref}>
-            <Button className="h-12 bg-violet-600 text-white hover:bg-violet-500">
-              Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
         </div>
-      </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <Link href={dashboardState.continueHref}>
+          <Button className="btn-primary btn-sm h-auto border-0 shadow-none">
+            Continue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="border-white/10 bg-[#0b101a] p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{stat.label}</p>
-                <p className="mt-3 text-3xl font-black text-white">{stat.value}</p>
-                <p className="mt-2 text-sm text-slate-400">{stat.detail}</p>
-              </div>
-              <span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.03] ${stat.accent}`}>
-                <stat.icon className="h-5 w-5" />
-              </span>
-            </div>
-          </Card>
+          <div
+            key={stat.label}
+            className={`c-card p-4 ${stat.label === 'Streak' ? 'border-l-4 border-l-orange-400' : ''}`}
+          >
+            <stat.icon className={`mb-2 h-5 w-5 ${stat.label === 'Streak' ? 'text-orange-500' : 'text-cblue-500'}`} />
+            <p className="text-2xl font-bold text-cgray-900">{stat.value}</p>
+            <p className="mt-0.5 text-sm text-cgray-500">{stat.label}</p>
+            <p className="mt-2 text-xs text-cgray-500">{stat.detail}</p>
+          </div>
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-white/10 bg-[#0b101a] p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
-              <BookOpen className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="text-xl font-semibold text-white">Continue where you left off</h2>
-              <p className="text-sm text-slate-400">{dashboardState.continueSubtitle}</p>
+      <div className="c-card p-5 mt-6 flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="w-1.5 h-16 bg-cblue-500 rounded-full flex-shrink-0" />
+        <div className="flex-1">
+          <p className="text-xs font-semibold text-cblue-500 uppercase tracking-wider">Continue Learning</p>
+          <p className="mt-0.5 text-base font-semibold text-cgray-900">{dashboardState.continueTitle}</p>
+          <p className="text-sm text-cgray-500">{dashboardState.continueSubtitle}</p>
+        </div>
+        <Link href={dashboardState.continueHref}>
+          <Button className="btn-primary btn-sm h-auto border-0 shadow-none flex-shrink-0">
+            Continue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+
+      {dashboardState.lessonsCompleted === 0 ? (
+        <div className="c-card p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-lg bg-cblue-50 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-cblue-500" />
             </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-            <h3 className="text-2xl font-bold text-white">{dashboardState.continueTitle}</h3>
-            <p className="mt-3 text-sm text-slate-300">
-              Pick up your latest lesson or jump into the first available lesson if you are just getting started.
-            </p>
-            <Link href={dashboardState.continueHref}>
-              <Button className="mt-5 bg-violet-600 text-white hover:bg-violet-500">
-                Continue Lesson
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        {dashboardState.lessonsCompleted === 0 ? (
-          <Card className="border-white/10 bg-[#0b101a] p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-xl font-semibold text-white">Welcome</h2>
-                <p className="text-sm text-slate-400">A clean start is all you need.</p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-              <p className="text-lg font-semibold text-white">
-                Ready to start your A/L journey?
-              </p>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                Your first lesson is waiting - it only takes 15 minutes.
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-cgray-900">Welcome</h2>
+              <p className="mt-1 text-sm text-cgray-600">
+                Ready to start your A/L journey? Your first lesson is waiting and it only takes 15 minutes.
               </p>
               <Link href={firstLessonHref}>
-                <Button className="mt-5 bg-emerald-600 text-white hover:bg-emerald-500">
+                <Button className="btn-primary btn-sm h-auto border-0 shadow-none mt-5">
                   Start My First Lesson
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
-          </Card>
-        ) : (
-          <Card className="border-white/10 bg-[#0b101a] p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-xl font-semibold text-white">Momentum</h2>
-                <p className="text-sm text-slate-400">Your dashboard is now running on real Firebase progress.</p>
-              </div>
+          </div>
+        </div>
+      ) : (
+        <div className="c-card p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-lg bg-cblue-50 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="h-5 w-5 text-cblue-500" />
             </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-              <p className="text-sm leading-6 text-slate-300">
-                Keep your streak alive, push your XP higher, and move through your enrolled subjects one lesson at a time.
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-cgray-900">Momentum</h2>
+              <p className="mt-1 text-sm text-cgray-600">
+                Keep your streak alive, build your XP, and move through your enrolled subjects one lesson at a time.
               </p>
               <Link href="/dashboard/subjects">
-                <Button className="mt-5 bg-emerald-600 text-white hover:bg-emerald-500">
+                <Button className="btn-primary btn-sm h-auto border-0 shadow-none mt-5">
                   View My Subjects
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
-          </Card>
-        )}
-      </div>
-
-      <Card className="border-white/10 bg-[#0b101a] p-6">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold text-white">My Subjects</h2>
-          <p className="text-sm text-slate-400">Only the subjects you enrolled in are shown here, with real completion and the next lesson to tackle.</p>
+          </div>
         </div>
+      )}
+
+      <div>
+        <h2 className="text-lg font-semibold text-cgray-900 mt-8 mb-4">Subject Progress</h2>
 
         {dashboardState.enrolledSubjectCards.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center">
-            <p className="text-lg font-semibold text-white">No enrolled subjects yet</p>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+          <div className="c-card p-6 text-center">
+            <p className="text-base font-semibold text-cgray-900">No enrolled subjects yet</p>
+            <p className="mt-3 text-sm leading-6 text-cgray-600">
               Choose your A/L subjects to unlock a personalized dashboard and progress tracking.
             </p>
             <Link href="/subjects">
-              <Button className="mt-5 bg-white text-black hover:bg-slate-200">
+              <Button className="btn-secondary h-auto mt-5 border-cgray-800 text-cgray-900 hover:bg-cgray-50">
                 Browse Subjects
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {dashboardState.enrolledSubjectCards.map((subject) => (
-              <div key={subject.id} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
-                      style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
-                    >
-                      {subject.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{subject.name}</h3>
-                      <p className="text-sm text-slate-400">
-                        {subject.completedLessons}/{subject.totalLessons} completed
-                      </p>
-                    </div>
+              <Link
+                key={subject.id}
+                href={subject.href}
+                className="c-card p-4 cursor-pointer hover:-translate-y-0.5 transition-all duration-200 hover:no-underline"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="flex h-11 w-11 items-center justify-center rounded-lg text-2xl"
+                    style={{ backgroundColor: `${subject.color}15`, color: subject.color }}
+                  >
+                    {subject.icon}
                   </div>
-
-                  <span className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300 ring-1 ring-white/10">
-                    {subject.completionPercent}%
-                  </span>
+                  <h3 className="text-base font-semibold text-cgray-900">{subject.name}</h3>
                 </div>
 
-                <div className="mt-4 space-y-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${subject.completionPercent}%`,
-                        background: `linear-gradient(90deg, ${subject.color}, #22c55e)`,
-                      }}
-                    />
-                  </div>
-                  <p className="text-sm text-slate-300">
-                    Up next: <span className="font-medium text-white">{subject.upNextTitle}</span>
-                  </p>
+                <div className="w-full bg-cgray-100 rounded-full h-2 mb-2 overflow-hidden">
+                  <div
+                    className="bg-cblue-500 h-2 rounded-full"
+                    style={{ width: `${subject.completionPercent}%` }}
+                  />
                 </div>
 
-                <Link href={subject.href} className="mt-5 inline-flex items-center text-sm font-semibold text-violet-300 hover:text-violet-200">
-                  Continue {subject.name}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </div>
+                <div className="flex justify-between text-xs text-cgray-500">
+                  <span>{subject.completedLessons}/{subject.totalLessons} lessons</span>
+                  <span>{subject.completionPercent}%</span>
+                </div>
+
+                <p className="text-sm text-cgray-700 mt-2 truncate">Up next: {subject.upNextTitle}</p>
+              </Link>
             ))}
           </div>
         )}
-      </Card>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold text-cgray-900 mt-8 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-3">
+          {QUICK_ACTIONS.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="c-card p-5 cursor-pointer hover:shadow-card-hover transition-shadow hover:no-underline"
+            >
+              <div className="w-10 h-10 rounded-lg bg-cblue-50 flex items-center justify-center mb-3">
+                <action.icon className="h-5 w-5 text-cblue-500" />
+              </div>
+              <h3 className="text-base font-semibold text-cgray-900">{action.title}</h3>
+              <p className="text-sm text-cgray-500 mt-1">{action.description}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -34,13 +34,13 @@ export function getMasteryLabel(status?: ProgressStatus): string {
 export function getMasteryColor(status?: ProgressStatus): string {
     switch (status) {
         case 'mastered':
-            return 'text-green-500';
+            return 'text-cgreen-500';
         case 'proficient':
-            return 'text-amber-500';
+            return 'text-cyellow-500';
         case 'practicing':
-            return 'text-blue-500';
+            return 'text-cblue-500';
         case 'not_started':
         default:
-            return 'text-slate-300';
+            return 'text-cgray-300';
     }
 }

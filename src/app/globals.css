@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,338 +7,332 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* =====================================================
-   ICONIC ACADEMY – GLOBAL DESIGN SYSTEM
-   Premium Dark Theme with Subject Color Tokens
-   ===================================================== */
-
-
 @theme inline {
+  --font-sans: var(--font-source-sans);
+  --font-display: var(--font-source-sans);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-space-grotesk);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-
-  /* Subject Color Tokens */
-  --color-physics: var(--physics);
-  --color-physics-light: var(--physics-light);
-  --color-chemistry: var(--chemistry);
-  --color-chemistry-light: var(--chemistry-light);
-  --color-biology: var(--biology);
-  --color-biology-light: var(--biology-light);
-  --color-maths: var(--maths);
-  --color-maths-light: var(--maths-light);
-
-  /* Brand */
-  --color-brand: var(--brand);
-  --color-brand-light: var(--brand-light);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
 }
 
 :root {
-  /* Default Light (not used — dark is default) */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(0.97 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-
-  /* Subject Colors */
-  --physics: #3b82f6;
-  --physics-light: #93c5fd;
-  --chemistry: #f97316;
-  --chemistry-light: #fdba74;
-  --biology: #22c55e;
-  --biology-light: #86efac;
-  --maths: #a855f7;
-  --maths-light: #d8b4fe;
-  --brand: #6366f1;
-  --brand-light: #a5b4fc;
-}
-
-.dark {
-  /* ── Premium Dark Theme ── */
-  --background: #080c14;
-  --foreground: #f1f5f9;
-  --card: #0f1623;
-  --card-foreground: #f1f5f9;
-  --popover: #0f1623;
-  --popover-foreground: #f1f5f9;
-  --primary: #6366f1;
-  --primary-foreground: #ffffff;
-  --secondary: #1e2535;
-  --secondary-foreground: #cbd5e1;
-  --muted: #1e2535;
-  --muted-foreground: #64748b;
-  --accent: #1e2535;
-  --accent-foreground: #f1f5f9;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.07);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #6366f1;
-  --chart-1: #6366f1;
-  --chart-2: #3b82f6;
-  --chart-3: #22c55e;
-  --chart-4: #f97316;
-  --chart-5: #a855f7;
-  --sidebar: #0a0f1a;
-  --sidebar-foreground: #f1f5f9;
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e2535;
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: rgba(255, 255, 255, 0.07);
-  --sidebar-ring: #6366f1;
+  --background: #FFFFFF;
+  --foreground: #1F1F1F;
+  --card: #FFFFFF;
+  --card-foreground: #1F1F1F;
+  --popover: #FFFFFF;
+  --popover-foreground: #1F1F1F;
+  --primary: #0056D2;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5F5F5;
+  --secondary-foreground: #1F1F1F;
+  --muted: #F5F5F5;
+  --muted-foreground: #757575;
+  --accent: #F0F4FF;
+  --accent-foreground: #1F1F1F;
+  --destructive: #C62828;
+  --border: #E0E0E0;
+  --input: #E0E0E0;
+  --ring: #0056D2;
+  --chart-1: #0056D2;
+  --chart-2: #2E7D32;
+  --chart-3: #F5BE41;
+  --chart-4: #C62828;
+  --chart-5: #6697DB;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1F1F1F;
+  --sidebar-primary: #0056D2;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F5F5F5;
+  --sidebar-accent-foreground: #1F1F1F;
+  --sidebar-border: #E0E0E0;
+  --sidebar-ring: #0056D2;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
     box-sizing: border-box;
+    @apply border-border;
   }
 
   html {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    scroll-behavior: smooth;
+    font-family: "Source Sans 3", "Source Sans Pro", -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 16px;
+    color: #1F1F1F;
+    background-color: #FFFFFF;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    background-color: #080c14;
-    color: #f1f5f9;
     min-height: 100vh;
     overflow-x: hidden;
+    background-color: #FFFFFF;
+    color: #1F1F1F;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  h1 {
+    font-size: 2.25rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: #1F1F1F;
+    letter-spacing: -0.01em;
   }
 
-  ::selection {
-    background: rgba(99, 102, 241, 0.3);
-    color: #f1f5f9;
+  h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #1F1F1F;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #1F1F1F;
   }
 
-  ::-webkit-scrollbar-track {
-    background: #0f1623;
+  h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #1F1F1F;
   }
 
-  ::-webkit-scrollbar-thumb {
-    background: #1e2535;
-    border-radius: 999px;
+  h5 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #1F1F1F;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: #6366f1;
+  h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #1F1F1F;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #1F1F1F;
+  }
+
+  a {
+    color: #0056D2;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  *:focus-visible {
+    outline: 2px solid #0056D2;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    font-size: 1rem;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
   }
 }
 
-/* =====================================================
-   PREMIUM UTILITY CLASSES
-   ===================================================== */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded bg-cblue-500 px-6 py-3 text-base font-semibold text-white transition-colors duration-150 hover:bg-cblue-600 active:bg-cblue-700 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded border-2 border-cblue-500 bg-white px-6 py-3 text-base font-semibold text-cblue-500 transition-colors duration-150 hover:bg-cblue-25 active:bg-cblue-50 disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded bg-transparent px-4 py-2 text-base font-semibold text-cgray-900 transition-colors duration-150 hover:bg-cgray-100 active:bg-cgray-200;
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .c-card {
+    @apply rounded border border-cgray-200 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .c-input {
+    @apply w-full rounded border border-cgray-200 bg-white px-4 py-3 text-base text-cgray-900 placeholder:text-cgray-400 transition-colors duration-150 focus:border-cblue-500 focus:ring-2 focus:ring-cblue-100 focus:outline-none;
+  }
+
+  .c-badge {
+    @apply inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .c-badge-blue {
+    @apply bg-cblue-50 text-cblue-600;
+  }
+
+  .c-badge-green {
+    @apply bg-cgreen-50 text-cgreen-600;
+  }
+
+  .c-badge-gray {
+    @apply bg-cgray-100 text-cgray-600;
+  }
+
+  .c-container {
+    @apply mx-auto max-w-coursera px-6;
+  }
+
+  .c-divider {
+    @apply my-8 border-t border-cgray-200;
+  }
+}
 
 @layer utilities {
-
-  /* Glass morphism */
   .glass {
-    background: rgba(15, 22, 35, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid #E0E0E0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   }
 
   .glass-light {
-    background: rgba(30, 37, 53, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(250, 250, 250, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #EEEEEE;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   }
 
-  /* Gradient text */
-  .gradient-text {
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
+  .gradient-text,
   .gradient-text-brand {
-    background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+    background: linear-gradient(135deg, #0056D2 0%, #3375CE 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Subject-specific gradient texts */
   .gradient-physics {
-    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    background: linear-gradient(135deg, #0056D2, #6697DB);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-chemistry {
-    background: linear-gradient(135deg, #f97316, #fb923c);
+    background: linear-gradient(135deg, #F9A825, #F5BE41);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-biology {
-    background: linear-gradient(135deg, #22c55e, #4ade80);
+    background: linear-gradient(135deg, #2E7D32, #66BB6A);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-maths {
-    background: linear-gradient(135deg, #a855f7, #c084fc);
+    background: linear-gradient(135deg, #0047B3, #0056D2);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Glow effects */
   .glow-brand {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 4px rgba(0, 86, 210, 0.08);
   }
 
-  .glow-physics {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.25);
-  }
-
-  .glow-chemistry {
-    box-shadow: 0 0 30px rgba(249, 115, 22, 0.25);
-  }
-
-  .glow-biology {
-    box-shadow: 0 0 30px rgba(34, 197, 94, 0.25);
-  }
-
+  .glow-physics,
+  .glow-chemistry,
+  .glow-biology,
   .glow-maths {
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.25);
+    box-shadow: 0 0 0 4px rgba(0, 86, 210, 0.06);
   }
 
-  /* Noise texture overlay */
   .noise {
     position: relative;
   }
 
   .noise::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 0;
     border-radius: inherit;
   }
 
-  /* Card hover effect */
   .card-hover {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      border-color 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   }
 
   .card-hover:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
   }
 
-  /* Section spacing */
   .section-pad {
     padding-top: 5rem;
     padding-bottom: 5rem;
   }
 
-  /* Animated gradient background */
   .hero-gradient {
-    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 40% at 80% 60%, rgba(168, 85, 247, 0.10) 0%, transparent 50%),
-      radial-gradient(ellipse 40% 30% at 10% 80%, rgba(59, 130, 246, 0.10) 0%, transparent 50%),
-      #080c14;
+    background:
+      radial-gradient(circle at top center, rgba(0, 86, 210, 0.12), transparent 42%),
+      linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
   }
 
-  /* Grid background */
   .grid-bg {
     background-image:
-      linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
-    background-size: 50px 50px;
+      linear-gradient(rgba(224, 224, 224, 0.7) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224, 224, 224, 0.7) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 }

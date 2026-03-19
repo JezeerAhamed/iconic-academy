@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -19,10 +18,7 @@ import {
     Settings,
     LogOut,
     Flame,
-    Menu,
-    X,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const BASE_NAV_ITEMS = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -39,7 +35,6 @@ const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export default function Sidebar() {
     const pathname = usePathname();
     const { profile, signOut } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
     const [gamData, setGamData] = useState({
         streak: 0,
         todayXP: 0,
@@ -71,12 +66,6 @@ export default function Sidebar() {
     const nextLevelXP = level * 1000;
     const xpInLevel = userXP % 1000;
     const xpPercent = (xpInLevel / 1000) * 100;
-    const xpToNext = nextLevelXP - userXP;
-
-    const goalProgress = gamData.dailyGoalXP > 0 ? Math.min(gamData.todayXP / gamData.dailyGoalXP, 1) : 0;
-    const circumference = 2 * Math.PI * 28;
-    const strokeDashoffset = circumference * (1 - goalProgress);
-    const goalComplete = goalProgress >= 1;
     const navItems = profile?.isAdmin
         ? [...BASE_NAV_ITEMS, { name: 'Admin', href: '/admin', icon: ShieldAlert }]
         : BASE_NAV_ITEMS;
@@ -86,83 +75,35 @@ export default function Sidebar() {
         ? gamData.streakDays
         : Array(7).fill(false).map((_, index) => index < Math.min(gamData.streak, 6));
 
-    const sidebarContent = (
-        <div className="relative z-20 flex h-full flex-col overflow-y-auto border-r border-white/5 bg-[#0b101a] scrollbar-thin">
-            <div className="flex h-16 flex-shrink-0 items-center border-b border-white/5 px-5">
-                <Link href="/dashboard" className="group flex items-center gap-2">
-                    <div className="relative h-10 w-[148px] overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg transition-transform duration-200 group-hover:scale-[1.02]">
-                        <Image
-                            src="/logo.jpg"
-                            alt="Iconic Academy"
-                            fill
-                            priority
-                            sizes="148px"
-                            className="object-cover"
-                        />
-                    </div>
-                </Link>
+    return (
+        <aside className="hidden md:flex flex-col w-60 min-h-screen bg-white border-r border-cgray-200 fixed left-0 top-16 bottom-0 overflow-y-auto">
+            <div className="p-4 border-b border-cgray-100">
+                <div className="w-10 h-10 rounded-full bg-cblue-500 text-white font-bold text-sm flex items-center justify-center mb-2 overflow-hidden">
+                    {profile?.photoURL ? (
+                        <img src={profile.photoURL} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                        profile?.displayName?.charAt(0).toUpperCase() || 'S'
+                    )}
+                </div>
+                <p className="text-sm font-semibold text-cgray-900 truncate">{profile?.displayName || 'Student'}</p>
+                <p className="text-xs text-cgray-500">Level {level} - {profile?.level || 'Beginner'}</p>
             </div>
 
-            <div className="flex-shrink-0 border-b border-white/5 p-4">
-                <div className="mb-3 flex items-center gap-3">
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-indigo-500/50 bg-indigo-500/20 text-lg font-bold text-indigo-400">
-                        {profile?.photoURL ? (
-                            <img src={profile.photoURL} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                            profile?.displayName?.charAt(0).toUpperCase() || 'S'
-                        )}
-                    </div>
-                    <div className="overflow-hidden">
-                        <h3 className="truncate text-sm font-semibold text-white">{profile?.displayName || 'Student'}</h3>
-                        <p className="text-xs text-indigo-400">Level {level} - {profile?.level || 'Beginner'}</p>
-                    </div>
+            <div className="px-4 py-3 border-b border-cgray-100">
+                <div className="flex justify-between text-xs text-cgray-500 mb-1.5">
+                    <span>{userXP.toLocaleString()} XP</span>
+                    <span>{nextLevelXP.toLocaleString()} next</span>
                 </div>
-
-                <div className="space-y-1">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
-                        <div
-                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-700"
-                            style={{ width: `${xpPercent}%` }}
-                        />
-                    </div>
-                    <div className="flex justify-between text-[10px]">
-                        <span className="font-medium text-indigo-400">{userXP.toLocaleString()} XP</span>
-                        <span className="text-slate-500">{xpToNext} XP to Level {level + 1}</span>
-                    </div>
+                <div className="w-full bg-cgray-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                        className="bg-cblue-500 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(0, Math.min(xpPercent, 100))}%` }}
+                    />
                 </div>
             </div>
 
-            <div className="flex-shrink-0 border-b border-white/5 p-4">
-                <div className="flex items-center gap-3">
-                    <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center">
-                        <svg className="-rotate-90 h-16 w-16" viewBox="0 0 64 64">
-                            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
-                            <circle
-                                cx="32"
-                                cy="32"
-                                r="28"
-                                fill="none"
-                                stroke={goalComplete ? '#22c55e' : '#a78bfa'}
-                                strokeWidth="4"
-                                strokeLinecap="round"
-                                strokeDasharray={circumference}
-                                strokeDashoffset={strokeDashoffset}
-                                className="transition-all duration-700"
-                            />
-                        </svg>
-                        <span className="absolute text-xs font-bold text-white">{Math.round(goalProgress * 100)}%</span>
-                    </div>
-                    <div>
-                        <p className="text-xs font-medium text-white">Today&apos;s Goal</p>
-                        <p className="text-[10px] text-slate-500">{gamData.todayXP} / {gamData.dailyGoalXP} XP</p>
-                        {goalComplete ? (
-                            <p className="mt-0.5 text-[10px] font-medium text-green-400">Goal complete</p>
-                        ) : null}
-                    </div>
-                </div>
-            </div>
-
-            <nav className="flex-1 space-y-0.5 px-3 py-3">
+            <nav className="flex-1 py-2">
+                <p className="px-4 pt-4 pb-1 text-xs font-semibold text-cgray-400 uppercase tracking-wider">Learning</p>
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                     const Icon = item.icon;
@@ -171,141 +112,71 @@ export default function Sidebar() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            onClick={() => setIsOpen(false)}
-                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+                            className={
                                 isActive
-                                    ? 'bg-purple-500/15 font-medium text-white'
-                                    : 'text-slate-400 hover:bg-white/5 hover:text-purple-300'
-                            }`}
+                                    ? 'flex items-center gap-3 px-4 py-2.5 text-sm text-cblue-500 font-semibold bg-cblue-25 border-r-2 border-cblue-500 transition-colors cursor-pointer'
+                                    : 'flex items-center gap-3 px-4 py-2.5 text-sm text-cgray-700 font-normal hover:bg-cgray-50 hover:text-cgray-900 transition-colors cursor-pointer rounded-none'
+                            }
                         >
-                            <Icon className={`h-[18px] w-[18px] ${isActive ? 'text-purple-400' : 'text-slate-500'}`} />
+                            <Icon className="w-4 h-4 flex-shrink-0" />
                             {item.name}
                         </Link>
                     );
                 })}
+
+                {enrolledSubjects.length > 0 ? (
+                    <div className="px-4 pt-4">
+                        <p className="pb-2 text-xs font-semibold text-cgray-400 uppercase tracking-wider">Subjects</p>
+                        <div className="flex flex-wrap gap-2">
+                            {enrolledSubjects.map((subject) => (
+                                <Link
+                                    key={subject.id}
+                                    href={`/dashboard/subjects/${subject.id}`}
+                                    className="inline-flex items-center gap-1 rounded-full border border-cgray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-cgray-700 transition-colors hover:bg-cgray-50"
+                                >
+                                    <span>{subject.icon}</span>
+                                    <span>{subject.name}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                ) : null}
             </nav>
 
-            {enrolledSubjects.length > 0 ? (
-                <div className="flex-shrink-0 px-4 pb-3">
-                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate-600">Subjects</p>
-                    <div className="flex flex-wrap gap-1.5">
-                        {enrolledSubjects.map((subject) => (
-                            <Link
-                                key={subject.id}
-                                href={`/dashboard/subjects/${subject.id}`}
-                                onClick={() => setIsOpen(false)}
-                                className="rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors hover:opacity-80"
-                                style={{
-                                    borderColor: `${subject.color}40`,
-                                    color: subject.color,
-                                    background: `${subject.color}10`,
-                                }}
-                            >
-                                {subject.icon} {subject.name}
-                            </Link>
-                        ))}
+            <div className="p-4 border-t border-cgray-100 mt-auto">
+                <div className="bg-cgray-50 rounded p-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-cgray-900">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        <span>{gamData.streak} Day Streak</span>
+                    </div>
+                    <p className="text-xs text-cgray-500 mt-1">Study today to keep your streak alive.</p>
+                    <div className="mt-3 flex justify-between">
+                        {DAYS.map((day, index) => {
+                            const done = streakCalendar[index];
+
+                            return (
+                                <div key={day + index} className="flex flex-col items-center gap-1">
+                                    <span className="text-[10px] font-medium text-cgray-400">{day}</span>
+                                    <span
+                                        className={
+                                            done
+                                                ? 'h-2.5 w-2.5 rounded-full bg-cblue-500'
+                                                : 'h-2.5 w-2.5 rounded-full bg-white border border-cgray-300'
+                                        }
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
-            ) : null}
-
-            <div className="flex-shrink-0 border-t border-white/5 p-4">
-                <div className="mb-2 flex items-center gap-2">
-                    <Flame className="h-4 w-4 text-orange-400" />
-                    <span className="text-sm font-bold text-white">{gamData.streak} Day Streak</span>
-                </div>
-                <p className="mb-2.5 text-[10px] text-slate-500">Study today to keep it going.</p>
-                <div className="flex justify-between">
-                    {DAYS.map((day, index) => {
-                        const done = streakCalendar[index];
-                        const isToday = index === 6;
-
-                        return (
-                            <div key={day + index} className="flex flex-col items-center gap-1">
-                                <span className="text-[9px] font-medium text-slate-600">{day}</span>
-                                <div
-                                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold ${
-                                        done
-                                            ? 'border border-green-500/30 bg-green-500/20 text-green-400'
-                                            : isToday
-                                                ? 'border border-white/10 bg-white/5 text-slate-500 ring-2 ring-purple-500/30'
-                                                : 'border border-white/5 bg-white/5 text-slate-600'
-                                    }`}
-                                >
-                                    {done ? 'OK' : isToday ? 'Now' : '-'}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="flex-shrink-0 border-t border-white/5 p-3">
                 <button
                     onClick={signOut}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-400 transition-all hover:bg-red-500/10 hover:text-red-400"
+                    className="mt-3 flex w-full items-center gap-3 px-4 py-2.5 text-sm text-cgray-700 font-normal hover:bg-cgray-50 hover:text-cgray-900 transition-colors cursor-pointer rounded-none"
                 >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="w-4 h-4 flex-shrink-0" />
                     Sign Out
                 </button>
             </div>
-        </div>
-    );
-
-    return (
-        <>
-            <div className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-[#0b101a]/90 px-4 backdrop-blur-xl md:hidden">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                    <div className="relative h-8 w-[116px] overflow-hidden rounded-lg border border-white/10 bg-white/5">
-                        <Image
-                            src="/logo.jpg"
-                            alt="Iconic Academy"
-                            fill
-                            sizes="116px"
-                            className="object-cover"
-                        />
-                    </div>
-                </Link>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 text-xs">
-                        <Flame className="h-3.5 w-3.5 text-orange-400" />
-                        <span className="font-bold text-orange-300">{gamData.streak}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-xs">
-                        <span className="text-yellow-400">XP</span>
-                        <span className="font-bold text-yellow-300">{profile?.xp ?? 0}</span>
-                    </div>
-                    <button onClick={() => setIsOpen(!isOpen)} className="p-1.5 text-slate-400 hover:text-white">
-                        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                    </button>
-                </div>
-            </div>
-
-            <aside className="fixed left-0 top-0 z-20 hidden h-screen w-64 md:block">
-                {sidebarContent}
-            </aside>
-
-            <AnimatePresence>
-                {isOpen ? (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
-                        />
-                        <motion.aside
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-                            className="fixed left-0 top-0 z-50 h-screen w-64 md:hidden"
-                        >
-                            {sidebarContent}
-                        </motion.aside>
-                    </>
-                ) : null}
-            </AnimatePresence>
-        </>
+        </aside>
     );
 }

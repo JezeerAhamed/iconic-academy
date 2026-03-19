@@ -2,177 +2,123 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock, Trophy, Zap } from 'lucide-react';
+import { ArrowRight, Zap } from 'lucide-react';
 import { SUBJECTS, SYLLABUS } from '@/lib/constants';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+function getSubjectBarClass(subjectId: string) {
+  return cn(
+    'h-2 w-full',
+    subjectId === 'physics' && 'bg-cblue-500',
+    subjectId === 'chemistry' && 'bg-cgreen-500',
+    subjectId === 'biology' && 'bg-cyellow-400',
+    subjectId === 'maths' && 'bg-cblue-700'
+  );
+}
 
 export default function SubjectsPageClient() {
-    return (
-        <div className="min-h-screen pt-28 pb-20 hero-gradient">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-                {/* Page Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center mb-16"
-                >
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-indigo-500/30 text-indigo-400 text-sm font-medium mb-6">
-                        <Zap className="w-4 h-4" />
-                        Full Sri Lankan A/L Curriculum
-                    </span>
-                    <h1 className="text-5xl sm:text-6xl font-black text-white mb-5 tracking-tight">
-                        Choose Your <span className="gradient-text">Subject</span>
-                    </h1>
-                    <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
-                        Every unit. Every topic. Every lesson — built for A/L mastery with AI-powered guidance and past papers.
-                    </p>
-                </motion.div>
-
-                {/* Subject Cards Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {SUBJECTS.map((subject, i) => {
-                        const units = SYLLABUS[subject.id as keyof typeof SYLLABUS] || [];
-
-                        return (
-                            <motion.div
-                                key={subject.id}
-                                initial={{ opacity: 0, y: 40 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: i * 0.1 }}
-                            >
-                                <Link href={`/subjects/${subject.id}`} className="block group">
-                                    <div
-                                        className="relative rounded-3xl overflow-hidden glass border transition-all duration-500 cursor-pointer"
-                                        style={{ borderColor: `${subject.color}20` }}
-                                        onMouseEnter={e => {
-                                            const el = e.currentTarget as HTMLDivElement;
-                                            el.style.borderColor = `${subject.color}45`;
-                                            el.style.transform = 'translateY(-6px)';
-                                            el.style.boxShadow = `0 30px 60px ${subject.color}18`;
-                                        }}
-                                        onMouseLeave={e => {
-                                            const el = e.currentTarget as HTMLDivElement;
-                                            el.style.borderColor = `${subject.color}20`;
-                                            el.style.transform = 'translateY(0px)';
-                                            el.style.boxShadow = 'none';
-                                        }}
-                                    >
-                                        {/* Top color band */}
-                                        <div
-                                            className="h-1.5 w-full"
-                                            style={{ background: `linear-gradient(90deg, ${subject.color}, ${subject.colorLight})` }}
-                                        />
-
-                                        {/* Background glow */}
-                                        <div
-                                            className="absolute top-0 right-0 w-72 h-72 rounded-full blur-3xl opacity-5 group-hover:opacity-10 transition-opacity duration-500 -translate-y-1/3 translate-x-1/3 pointer-events-none"
-                                            style={{ background: subject.color }}
-                                        />
-
-                                        <div className="p-8 relative">
-                                            {/* Header Row */}
-                                            <div className="flex items-start justify-between mb-6">
-                                                <div className="flex items-center gap-4">
-                                                    <div
-                                                        className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-xl"
-                                                        style={{
-                                                            background: `${subject.color}15`,
-                                                            border: `1.5px solid ${subject.color}30`,
-                                                            boxShadow: `0 8px 24px ${subject.color}20`,
-                                                        }}
-                                                    >
-                                                        {subject.icon}
-                                                    </div>
-                                                    <div>
-                                                        <h2
-                                                            className="text-2xl font-black tracking-tight"
-                                                            style={{ color: subject.color }}
-                                                        >
-                                                            {subject.name}
-                                                        </h2>
-                                                        <p className="text-slate-400 text-sm mt-0.5">{subject.description.slice(0, 60)}...</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Stats Row */}
-                                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                                {[
-                                                    { icon: <BookOpen className="w-4 h-4" />, value: `${subject.unitCount}`, label: 'Units' },
-                                                    { icon: <Trophy className="w-4 h-4" />, value: `${subject.lessonCount}+`, label: 'Lessons' },
-                                                    { icon: <Clock className="w-4 h-4" />, value: '120+', label: 'Hours' },
-                                                ].map((stat, j) => (
-                                                    <div
-                                                        key={j}
-                                                        className="rounded-xl p-3 text-center"
-                                                        style={{ background: `${subject.color}10` }}
-                                                    >
-                                                        <div className="flex justify-center mb-1" style={{ color: subject.color }}>{stat.icon}</div>
-                                                        <div className="text-white font-bold text-lg leading-none">{stat.value}</div>
-                                                        <div className="text-slate-400 text-xs mt-0.5">{stat.label}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {/* Units List */}
-                                            <div className="mb-6">
-                                                <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-3">Syllabus Units</p>
-                                                <div className="space-y-2">
-                                                    {units.slice(0, 5).map((unit, j) => (
-                                                        <div key={unit.id} className="flex items-center gap-3">
-                                                            <div
-                                                                className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
-                                                                style={{ background: `${subject.color}20`, color: subject.color }}
-                                                            >
-                                                                {j + 1}
-                                                            </div>
-                                                            <span className="text-slate-300 text-sm">{unit.title}</span>
-                                                            {j < 2 && (
-                                                                <Badge
-                                                                    className="ml-auto text-[10px] py-0"
-                                                                    style={{ background: `${subject.color}15`, color: subject.color, border: `1px solid ${subject.color}20` }}
-                                                                >
-                                                                    Free
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                    {units.length > 5 && (
-                                                        <p className="text-slate-500 text-xs pl-9">
-                                                            + {units.length - 5} more units included
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* CTA Row */}
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1.5 text-sm text-slate-400">
-                                                    <span>First 2 units available free</span>
-                                                </div>
-
-                                                <div
-                                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 group-hover:gap-3"
-                                                    style={{
-                                                        background: `${subject.color}20`,
-                                                        color: subject.color,
-                                                        border: `1px solid ${subject.color}30`,
-                                                    }}
-                                                >
-                                                    Start Learning
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </motion.div>
-                        );
-                    })}
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-white pt-16 pb-16">
+      <section className="border-b border-cgray-200 bg-cgray-50 py-16">
+        <div className="c-container">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="mb-2 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-cblue-500">
+              <Zap className="h-4 w-4" />
+              Full Sri Lankan A/L Curriculum
+            </span>
+            <h1 className="mb-2 text-3xl font-bold text-cgray-900">Choose Your Subject</h1>
+            <p className="text-base text-cgray-600">
+              Every unit. Every topic. Every lesson. Built for A/L mastery with AI-powered guidance and
+              past papers.
+            </p>
+          </motion.div>
         </div>
-    );
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="c-container">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {SUBJECTS.map((subject, index) => {
+              const units = SYLLABUS[subject.id as keyof typeof SYLLABUS] || [];
+
+              return (
+                <motion.div
+                  key={subject.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="h-full"
+                >
+                  <Link href={`/subjects/${subject.id}`} className="group block h-full hover:no-underline">
+                    <div className="c-card flex h-full cursor-pointer flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
+                      <div className={getSubjectBarClass(subject.id)} />
+
+                      <div className="flex flex-1 flex-col p-4">
+                        <div className="mb-2 text-2xl">{subject.icon}</div>
+
+                        <h2 className="mb-1 text-base font-semibold leading-snug text-cgray-900 transition-colors group-hover:text-cblue-500">
+                          {subject.name}
+                        </h2>
+
+                        <p className="mb-3 flex-1 text-sm leading-relaxed text-cgray-500">
+                          {subject.description.slice(0, 60)}...
+                        </p>
+
+                        <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-cgray-500">
+                          <div className="flex items-center gap-1">
+                            <span>{subject.unitCount} Units</span>
+                          </div>
+                          <span className="hidden h-1 w-1 rounded-full bg-cgray-300 sm:block" />
+                          <div className="flex items-center gap-1">
+                            <span>{subject.lessonCount}+ Lessons</span>
+                          </div>
+                          <span className="hidden h-1 w-1 rounded-full bg-cgray-300 sm:block" />
+                          <div className="flex items-center gap-1">
+                            <span>120+ Hours</span>
+                          </div>
+                        </div>
+
+                        <div className="mb-3 border-t border-cgray-100 pt-3">
+                          {units.slice(0, 5).map((unit, unitIndex) => (
+                            <div key={unit.id} className="flex items-center gap-2 py-0.5 text-xs text-cgray-600">
+                              <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-cgray-100 text-[10px] font-semibold text-cgray-600">
+                                {unitIndex + 1}
+                              </div>
+                              <span className="truncate">{unit.title}</span>
+                              {unitIndex < 2 ? <span className="c-badge-green ml-auto text-[9px]">Free</span> : null}
+                            </div>
+                          ))}
+
+                          {units.length > 5 ? (
+                            <p className="mt-1 text-xs font-semibold text-cblue-500">
+                              + {units.length - 5} more units included
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-cgray-100 pt-3">
+                          <div className="flex items-center gap-1 text-xs text-cgray-500">
+                            <span>First 2 units available free</span>
+                          </div>
+
+                          <div className="flex items-center gap-1 text-sm font-semibold text-cblue-500 transition-colors hover:text-cblue-600">
+                            Start Learning
+                            <ArrowRight className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
