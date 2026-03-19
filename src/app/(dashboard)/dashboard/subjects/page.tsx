@@ -1,158 +1,416 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { Subject, Progress } from '@/lib/types';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import { BookOpen, PlayCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import { ArrowRight, BookOpen, Layers3 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { SUBJECT_MAP, SUBJECTS, SYLLABUS } from '@/lib/constants';
+import { getGeneratedLessons } from '@/lib/dashboard-intelligence';
+import { auth, db } from '@/lib/firebase';
+import { Progress as LessonProgress, ProgressStatus, SubjectId } from '@/lib/types';
+
+interface SubjectCardData {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  unitCount: number;
+  lessonCount: number;
+  completedLessons: number;
+  progressPercent: number;
+  ctaHref: string;
+  ctaLabel: 'Continue' | 'Start Learning';
+}
+
+interface ProgressEntry extends LessonProgress {
+  lessonId: string;
+}
+
+interface LastVisitedLesson {
+  subjectId?: string;
+  unitId?: string;
+  lessonId?: string;
+  href?: string;
+}
+
+function isSubjectId(value: string): value is SubjectId {
+  return value in SUBJECT_MAP;
+}
+
+function parseNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  return null;
+}
+
+function isCompletedStatus(status: ProgressStatus) {
+  return status === 'proficient' || status === 'mastered';
+}
+
+function normalizeSubject(subjectId: string, rawData: Record<string, unknown>) {
+  const fallback = isSubjectId(subjectId) ? SUBJECT_MAP[subjectId] : null;
+
+  return {
+    id: subjectId,
+    name:
+      (typeof rawData.name === 'string' && rawData.name.trim()) ||
+      (typeof rawData.nameEn === 'string' && rawData.nameEn.trim()) ||
+      fallback?.name ||
+      'Subject',
+    icon:
+      (typeof rawData.icon === 'string' && rawData.icon.trim()) ||
+      fallback?.icon ||
+      '*',
+    color:
+      (typeof rawData.color === 'string' && rawData.color.trim()) ||
+      (typeof rawData.colorHex === 'string' && rawData.colorHex.trim()) ||
+      fallback?.color ||
+      '#6366f1',
+    unitCount:
+      parseNumber(rawData.unitCount) ??
+      parseNumber(rawData.totalUnits) ??
+      fallback?.unitCount ??
+      0,
+    lessonCount:
+      parseNumber(rawData.lessonCount) ??
+      parseNumber(rawData.totalLessons) ??
+      fallback?.lessonCount ??
+      0,
+  };
+}
+
+function readLastVisitedLesson(value: unknown): LastVisitedLesson | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const candidate = value as Record<string, unknown>;
+  return {
+    subjectId: typeof candidate.subjectId === 'string' ? candidate.subjectId : undefined,
+    unitId: typeof candidate.unitId === 'string' ? candidate.unitId : undefined,
+    lessonId: typeof candidate.lessonId === 'string' ? candidate.lessonId : undefined,
+    href: typeof candidate.href === 'string' ? candidate.href : undefined,
+  };
+}
+
+function resolveContinueHref(subjectId: string, lastVisitedLesson: LastVisitedLesson | null, subjectProgress: ProgressEntry[]) {
+  if (lastVisitedLesson?.subjectId === subjectId && lastVisitedLesson.href) {
+    return lastVisitedLesson.href;
+  }
+
+  if (!isSubjectId(subjectId)) {
+    return `/dashboard/subjects/${subjectId}`;
+  }
+
+  const progressByLessonId = new Map(subjectProgress.map((entry) => [entry.lessonId, entry]));
+  const units = SYLLABUS[subjectId] ?? [];
+
+  for (const unit of units) {
+    const generatedLessons = getGeneratedLessons(subjectId, unit.id);
+
+    for (const lesson of generatedLessons) {
+      const status = progressByLessonId.get(lesson.lessonId)?.status ?? 'not_started';
+      if (status !== 'mastered') {
+        return lesson.href;
+      }
+    }
+  }
+
+  return `/dashboard/subjects/${subjectId}`;
+}
+
+function getSubjectSortIndex(subjectId: string) {
+  return SUBJECTS.findIndex((subject) => subject.id === subjectId);
+}
+
+function SubjectsLoadingSkeleton() {
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="border-white/10 bg-[#0b101a] py-6">
+        <CardContent className="space-y-4">
+          <div className="h-4 w-28 animate-pulse rounded bg-white/10" />
+          <div className="h-9 w-72 animate-pulse rounded bg-white/10" />
+          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-white/5" />
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Card key={index} className="border-white/10 bg-[#0b101a] py-6">
+            <CardContent className="space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 animate-pulse rounded-2xl bg-white/10" />
+                  <div className="space-y-2">
+                    <div className="h-5 w-32 animate-pulse rounded bg-white/10" />
+                    <div className="h-4 w-24 animate-pulse rounded bg-white/5" />
+                  </div>
+                </div>
+                <div className="h-6 w-16 animate-pulse rounded-full bg-white/5" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-20 animate-pulse rounded-2xl bg-white/[0.04]" />
+                <div className="h-20 animate-pulse rounded-2xl bg-white/[0.04]" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="h-4 w-40 animate-pulse rounded bg-white/5" />
+                <div className="h-2.5 w-full animate-pulse rounded-full bg-white/10" />
+              </div>
+
+              <div className="h-11 w-full animate-pulse rounded-xl bg-white/10" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardSubjectsPage() {
-    const { profile } = useAuth();
-    const [subjects, setSubjects] = useState<Subject[]>([]);
-    const [progressMap, setProgressMap] = useState<Record<string, number>>({});
-    const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [subjects, setSubjects] = useState<SubjectCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        async function fetchData() {
-            if (!profile?.uid) return;
+  useEffect(() => {
+    let isActive = true;
 
-            try {
-                // Fetch all subjects from Firestore
-                const subjectsSnap = await getDocs(collection(db, 'subjects'));
-                const fetchedSubjects = subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Subject));
-                setSubjects(fetchedSubjects);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isActive) return;
 
-                // Fetch student progress to calculate completion percentages
-                const progressQ = query(collection(db, 'studentProgress'), where('userId', '==', profile.uid));
-                const progressSnap = await getDocs(progressQ);
+      setLoading(true);
+      setError(null);
 
-                const pMap: Record<string, number> = {};
-                progressSnap.docs.forEach(doc => {
-                    const data = doc.data() as Progress;
-                    if (data.status === 'mastered' || data.status === 'completed' as any) {
-                        pMap[data.subjectId] = (pMap[data.subjectId] || 0) + 1;
-                    }
-                });
-                setProgressMap(pMap);
-            } catch (error) {
-                console.error("Error fetching subjects:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
+      if (!firebaseUser) {
+        router.replace('/auth/login');
+        return;
+      }
 
-        fetchData();
-    }, [profile?.uid]);
+      try {
+        const [subjectsSnapshot, userSnapshot, progressSnapshot] = await Promise.all([
+          getDocs(collection(db, 'subjects')),
+          getDoc(doc(db, 'users', firebaseUser.uid)),
+          getDocs(collection(db, 'studentProgress', firebaseUser.uid, 'lessons')),
+        ]);
 
-    if (loading) {
-        return (
-            <div className="space-y-8 pb-12">
-                <div>
-                    <div className="h-8 w-48 bg-white/10 rounded animate-pulse mb-3" />
-                    <div className="h-4 w-64 bg-white/5 rounded animate-pulse" />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {[1, 2, 3, 4].map(n => (
-                        <Card key={n} className="p-6 bg-white/5 border-white/5 h-48 animate-pulse" />
-                    ))}
-                </div>
-            </div>
-        );
-    }
+        if (!isActive) return;
 
-    if (subjects.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-                <BookOpen className="w-16 h-16 text-slate-500 mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-2">No Subjects Found</h2>
-                <p className="text-slate-400">Subjects haven't been added to the database yet. Check back later!</p>
-            </div>
-        );
-    }
+        const lastVisitedLesson = readLastVisitedLesson(userSnapshot.data()?.lastVisitedLesson);
+        const progressEntries = progressSnapshot.docs.map((progressDoc) => ({
+          lessonId: progressDoc.id,
+          ...(progressDoc.data() as LessonProgress),
+        }));
 
+        const progressBySubject = progressEntries.reduce<Record<string, ProgressEntry[]>>((accumulator, entry) => {
+          if (!accumulator[entry.subjectId]) {
+            accumulator[entry.subjectId] = [];
+          }
+
+          accumulator[entry.subjectId].push(entry);
+          return accumulator;
+        }, {});
+
+        const normalizedSubjects = subjectsSnapshot.docs
+          .map((subjectDoc) => {
+            const normalized = normalizeSubject(subjectDoc.id, subjectDoc.data() as Record<string, unknown>);
+            const subjectProgress = progressBySubject[normalized.id] ?? [];
+            const completedLessons = subjectProgress.filter((entry) => isCompletedStatus(entry.status)).length;
+            const progressPercent =
+              normalized.lessonCount > 0
+                ? Math.min(100, Math.round((completedLessons / normalized.lessonCount) * 100))
+                : 0;
+            const hasProgress =
+              subjectProgress.length > 0 ||
+              (lastVisitedLesson?.subjectId === normalized.id && Boolean(lastVisitedLesson.href));
+
+            return {
+              ...normalized,
+              completedLessons,
+              progressPercent,
+              ctaHref: hasProgress
+                ? resolveContinueHref(normalized.id, lastVisitedLesson, subjectProgress)
+                : `/dashboard/subjects/${normalized.id}`,
+              ctaLabel: hasProgress ? 'Continue' : 'Start Learning',
+            } satisfies SubjectCardData;
+          })
+          .sort((left, right) => {
+            const leftIndex = getSubjectSortIndex(left.id);
+            const rightIndex = getSubjectSortIndex(right.id);
+
+            if (leftIndex >= 0 && rightIndex >= 0) return leftIndex - rightIndex;
+            if (leftIndex >= 0) return -1;
+            if (rightIndex >= 0) return 1;
+            return left.name.localeCompare(right.name);
+          });
+
+        setSubjects(normalizedSubjects);
+        setLoading(false);
+      } catch (fetchError) {
+        console.error('Failed to load dashboard subjects', fetchError);
+
+        if (!isActive) return;
+
+        setError('We could not load your subjects right now. Please try again in a moment.');
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [router]);
+
+  const totalLessons = useMemo(
+    () => subjects.reduce((sum, subject) => sum + subject.lessonCount, 0),
+    [subjects]
+  );
+
+  const totalCompletedLessons = useMemo(
+    () => subjects.reduce((sum, subject) => sum + subject.completedLessons, 0),
+    [subjects]
+  );
+
+  if (loading) {
+    return <SubjectsLoadingSkeleton />;
+  }
+
+  if (error) {
     return (
-        <div className="space-y-8 pb-12">
-            <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight mb-2">My Subjects</h1>
-                <p className="text-slate-400">Manage your enrolled subjects and track your exact progress.</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {subjects.map((subject, i) => {
-                    const isEnrolled = profile?.enrolledSubjects?.includes(subject.id);
-                    const completedLessons = progressMap[subject.id] || 0;
-                    const totalLessons = subject.lessonCount || 1;
-                    const progressPercent = Math.min(100, Math.round((completedLessons / totalLessons) * 100));
-
-                    // Use lastVisitedLesson if it specifically belongs to this subject.
-                    // If complex, we just link to the first unit of the subject for now.
-                    // Optional: link directly to lesson if stored globally
-                    const targetLink = `/dashboard/subjects/${subject.id}`;
-
-                    return (
-                        <motion.div
-                            key={subject.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                        >
-                            <Link href={targetLink} className="block group h-full">
-                                <Card className={`p-6 bg-black/20 border transition-all h-full ${isEnrolled ? 'border-white/10 hover:border-white/30' : 'border-white/5 opacity-60 hover:opacity-100 grayscale hover:grayscale-0'}`}>
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center gap-4">
-                                            <div
-                                                className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shadow-lg"
-                                                style={{ background: `${subject.color || '#4f46e5'}15`, color: subject.color || '#4f46e5' }}
-                                            >
-                                                {subject.icon || '📚'}
-                                            </div>
-                                            <div>
-                                                <h2 className="text-xl font-bold text-white mb-1" style={{ color: subject.color || '#fff' }}>{subject.name}</h2>
-                                                <div className="flex gap-3 text-xs text-slate-400">
-                                                    <span>{subject.unitCount || 0} Units</span>
-                                                    <span>•</span>
-                                                    <span>{subject.lessonCount || 0}+ Lessons</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {isEnrolled ? (
-                                        <div className="mt-6 space-y-3">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="text-slate-400">Progress</span>
-                                                <span className="text-white font-bold">{progressPercent}%</span>
-                                            </div>
-                                            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                                                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${progressPercent}%`, backgroundColor: subject.color || '#4f46e5' }} />
-                                            </div>
-                                            <div className="pt-2">
-                                                <div className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-400 group-hover:text-indigo-300 transition-colors">
-                                                    {progressPercent > 0 ? (
-                                                        <>Continue Learning <PlayCircle className="w-4 h-4" /></>
-                                                    ) : (
-                                                        <>Start Learning <PlayCircle className="w-4 h-4" /></>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="mt-6">
-                                            <span className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white/5 text-sm font-medium text-slate-300 group-hover:bg-white/10 transition-colors">
-                                                View Syllabus
-                                            </span>
-                                        </div>
-                                    )}
-                                </Card>
-                            </Link>
-                        </motion.div>
-                    );
-                })}
-            </div>
-        </div>
+      <div className="pb-12">
+        <Card className="border-rose-400/20 bg-[#0b101a] py-6">
+          <CardContent className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">Unable to load subjects</p>
+            <h1 className="text-2xl font-black text-white">Something went wrong while loading your dashboard.</h1>
+            <p className="max-w-2xl text-sm leading-6 text-slate-300">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
+  }
+
+  if (subjects.length === 0) {
+    return (
+      <div className="pb-12">
+        <Card className="border-white/10 bg-[#0b101a] py-6">
+          <CardContent className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Subjects</p>
+            <h1 className="text-2xl font-black text-white">Your learning dashboard is almost ready.</h1>
+            <p className="max-w-2xl text-sm leading-6 text-slate-300">
+              Your subjects are being set up. Check back soon!
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="border-white/10 bg-[#0b101a] py-6">
+        <CardContent className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Your subjects</p>
+            <h1 className="text-3xl font-black tracking-tight text-white">Pick up your A/L learning where you left off.</h1>
+            <p className="max-w-2xl text-sm leading-6 text-slate-300">
+              Every card below is connected to your real lesson progress and points you to the next best place to continue.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Completed lessons</p>
+              <p className="mt-2 text-2xl font-black text-white">{totalCompletedLessons}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Available lessons</p>
+              <p className="mt-2 text-2xl font-black text-white">{totalLessons}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {subjects.map((subject) => (
+          <Card key={subject.id} className="border-white/10 bg-[#0b101a] py-6">
+            <CardHeader className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-lg"
+                    style={{ backgroundColor: `${subject.color}20`, color: subject.color }}
+                  >
+                    {subject.icon}
+                  </div>
+
+                  <div>
+                    <CardTitle className="text-xl font-bold text-white">{subject.name}</CardTitle>
+                    <p className="mt-1 text-sm text-slate-400">{subject.completedLessons} lessons completed</p>
+                  </div>
+                </div>
+
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
+                  style={{ backgroundColor: `${subject.color}20`, color: subject.color }}
+                >
+                  {subject.progressPercent}%
+                </span>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Layers3 className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em]">Units</span>
+                  </div>
+                  <p className="mt-3 text-2xl font-black text-white">{subject.unitCount}</p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em]">Lessons</span>
+                  </div>
+                  <p className="mt-3 text-2xl font-black text-white">{subject.lessonCount}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-slate-300">Progress</span>
+                  <span className="font-semibold text-white">
+                    {subject.completedLessons} / {subject.lessonCount}
+                  </span>
+                </div>
+                <Progress
+                  value={subject.progressPercent}
+                  className="gap-0"
+                />
+              </div>
+
+              <Link
+                href={subject.ctaHref}
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white transition hover:brightness-110"
+                style={{ backgroundColor: subject.color }}
+              >
+                {subject.ctaLabel}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
 }

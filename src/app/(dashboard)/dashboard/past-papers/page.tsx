@@ -1,220 +1,435 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import { ArrowRight, Clock3, FileText, Lock, Sparkles } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBJECTS } from '@/lib/constants';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, PlayCircle, Download, CheckCircle2, Lock, Calendar, Clock, Award } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { auth, db } from '@/lib/firebase';
 
-interface PastPaperData {
-    id: string;
-    subjectId: string;
-    year: number;
-    title: string;
-    type: 'MCQ' | 'Structured' | 'Full';
-    duration: number; // minutes
-    marks: number;
-    isPremium: boolean;
+type SubjectFilter = 'all' | 'physics' | 'chemistry' | 'biology' | 'maths';
+type YearFilter = 'all' | '2023' | '2022' | '2021' | '2020' | '2019' | '2018' | '2017';
+type PaperTypeFilter = 'all' | 'MCQ' | 'Structured' | 'Full';
+
+interface PastPaperCardData {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  subjectIcon: string;
+  subjectColor: string;
+  year: number;
+  type: 'MCQ' | 'Structured' | 'Full';
+  durationText: string;
+  marks: number;
+  isPremium: boolean;
 }
 
-const YEARS = ['All', '2023', '2022', '2021', '2020', '2019', '2018'];
+const SUBJECT_TABS: Array<{ id: SubjectFilter; label: string }> = [
+  { id: 'all', label: 'All' },
+  { id: 'physics', label: 'Physics' },
+  { id: 'chemistry', label: 'Chemistry' },
+  { id: 'biology', label: 'Biology' },
+  { id: 'maths', label: 'Combined Maths' },
+];
+
+const YEAR_OPTIONS: YearFilter[] = ['all', '2023', '2022', '2021', '2020', '2019', '2018', '2017'];
+const PAPER_TYPES: PaperTypeFilter[] = ['all', 'MCQ', 'Structured', 'Full'];
+
+function parseNumber(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+
+  return 0;
+}
+
+function normalizePaperType(value: unknown): 'MCQ' | 'Structured' | 'Full' {
+  if (typeof value !== 'string') return 'Full';
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === 'mcq' || normalized === 'multiple choice') return 'MCQ';
+  if (normalized === 'structured' || normalized === 'essay' || normalized === 'structured paper') return 'Structured';
+  if (normalized === 'full' || normalized === 'full paper') return 'Full';
+
+  return 'Full';
+}
+
+function formatDuration(value: unknown) {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+
+  const minutes = parseNumber(value);
+  if (minutes <= 0) return '3 Hours';
+
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return `${hours} ${hours === 1 ? 'Hour' : 'Hours'}`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours <= 0) return `${remainingMinutes} Minutes`;
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+function normalizePaper(docId: string, rawData: Record<string, unknown>): PastPaperCardData {
+  const subjectId =
+    typeof rawData.subjectId === 'string' && rawData.subjectId.trim()
+      ? rawData.subjectId.trim()
+      : 'physics';
+  const subject = SUBJECTS.find((entry) => entry.id === subjectId);
+
+  return {
+    id: docId,
+    subjectId,
+    subjectName:
+      (typeof rawData.subjectName === 'string' && rawData.subjectName.trim()) ||
+      subject?.name ||
+      'Unknown Subject',
+    subjectIcon:
+      (typeof rawData.subjectIcon === 'string' && rawData.subjectIcon.trim()) ||
+      subject?.icon ||
+      '*',
+    subjectColor:
+      (typeof rawData.subjectColor === 'string' && rawData.subjectColor.trim()) ||
+      subject?.color ||
+      '#6366f1',
+    year: parseNumber(rawData.year) || 2023,
+    type: normalizePaperType(rawData.type),
+    durationText: formatDuration(rawData.duration),
+    marks: parseNumber(rawData.marks) || 100,
+    isPremium: Boolean(rawData.isPremium),
+  };
+}
+
+function PastPapersSkeleton() {
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="border-white/10 bg-[#0b101a] py-6">
+        <CardContent className="space-y-4">
+          <div className="h-10 w-64 animate-pulse rounded bg-white/10" />
+          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-white/5" />
+          <div className="grid gap-3 lg:grid-cols-[1.4fr_220px_220px]">
+            <div className="h-12 animate-pulse rounded-2xl bg-white/[0.04]" />
+            <div className="h-12 animate-pulse rounded-2xl bg-white/[0.04]" />
+            <div className="h-12 animate-pulse rounded-2xl bg-white/[0.04]" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Card key={index} className="border-white/10 bg-[#0b101a] py-6">
+            <CardContent className="space-y-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <div className="h-6 w-16 animate-pulse rounded-full bg-white/10" />
+                  <div className="h-5 w-40 animate-pulse rounded bg-white/10" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-white/5" />
+                </div>
+                <div className="h-12 w-12 animate-pulse rounded-2xl bg-white/[0.04]" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-16 animate-pulse rounded-2xl bg-white/[0.04]" />
+                <div className="h-16 animate-pulse rounded-2xl bg-white/[0.04]" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-11 animate-pulse rounded-xl bg-white/10" />
+                <div className="h-11 animate-pulse rounded-xl bg-white/[0.04]" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function PastPapersPage() {
-    const { profile } = useAuth();
+  const router = useRouter();
+  const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>('all');
+  const [yearFilter, setYearFilter] = useState<YearFilter>('all');
+  const [paperTypeFilter, setPaperTypeFilter] = useState<PaperTypeFilter>('all');
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const [papers, setPapers] = useState<PastPaperCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    // Filters
-    const [activeSubject, setActiveSubject] = useState('all');
-    const [activeYear, setActiveYear] = useState('All');
+  useEffect(() => {
+    let isActive = true;
 
-    // Data
-    const [papers, setPapers] = useState<PastPaperData[]>([]);
-    const [loading, setLoading] = useState(true);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isActive) return;
 
-    useEffect(() => {
-        async function fetchPapers() {
-            try {
-                const papersRef = collection(db, 'pastPapers');
-                // Basic fetch. Complex multi-field filtering is easier done client-side for small datasets
-                // or we can build conditional queries if we have indexes.
-                const snapshot = await getDocs(papersRef);
-                const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PastPaperData));
-                setPapers(fetched);
-            } catch (error) {
-                console.error("Error fetching past papers:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchPapers();
-    }, []);
+      setLoading(true);
+      setError(null);
 
-    const filteredPapers = useMemo(() => {
-        return papers.filter(p => {
-            const matchSubject = activeSubject === 'all' || p.subjectId === activeSubject;
-            const matchYear = activeYear === 'All' || p.year.toString() === activeYear;
-            return matchSubject && matchYear;
-        }).sort((a, b) => b.year - a.year);
-    }, [papers, activeSubject, activeYear]);
+      if (!firebaseUser) {
+        router.replace('/auth/login');
+        return;
+      }
 
+      try {
+        const [papersSnapshot, userSnapshot] = await Promise.all([
+          getDocs(collection(db, 'pastPapers')),
+          getDoc(doc(db, 'users', firebaseUser.uid)),
+        ]);
+
+        if (!isActive) return;
+
+        const normalized = papersSnapshot.docs
+          .map((paperDoc) => normalizePaper(paperDoc.id, paperDoc.data() as Record<string, unknown>))
+          .sort((left, right) => right.year - left.year);
+
+        const plan = userSnapshot.data()?.plan;
+
+        setUserPlan(typeof plan === 'string' ? plan : 'free');
+        setPapers(normalized);
+        setLoading(false);
+      } catch (fetchError) {
+        console.error('Failed to load past papers', fetchError);
+
+        if (!isActive) return;
+
+        setError('We could not load past papers right now. Please try again in a moment.');
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [router]);
+
+  const filteredPapers = useMemo(() => {
+    return papers.filter((paper) => {
+      const matchesSubject = subjectFilter === 'all' || paper.subjectId === subjectFilter;
+      const matchesYear = yearFilter === 'all' || String(paper.year) === yearFilter;
+      const matchesPaperType = paperTypeFilter === 'all' || paper.type === paperTypeFilter;
+
+      return matchesSubject && matchesYear && matchesPaperType;
+    });
+  }, [paperTypeFilter, papers, subjectFilter, yearFilter]);
+
+  const hasPremiumAccess = userPlan === 'pro' || userPlan === 'elite' || userPlan === 'premium';
+
+  if (loading) {
+    return <PastPapersSkeleton />;
+  }
+
+  if (error) {
     return (
-        <div className="space-y-8 pb-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Past Papers Engine</h1>
-                    <p className="text-slate-400">Master real A/L exam patterns with AI-guided grading and video solutions.</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Main Content */}
-                <div className="lg:col-span-3 space-y-6">
-                    {/* Filters */}
-                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                        <select
-                            value={activeSubject}
-                            onChange={(e) => setActiveSubject(e.target.value)}
-                            className="bg-[#0b101a] border border-white/10 text-white rounded-lg px-4 py-2 outline-none focus:border-indigo-500 transition-colors"
-                        >
-                            <option value="all">All Subjects</option>
-                            {SUBJECTS.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-
-                        <select
-                            value={activeYear}
-                            onChange={(e) => setActiveYear(e.target.value)}
-                            className="bg-[#0b101a] border border-white/10 text-white rounded-lg px-4 py-2 outline-none focus:border-indigo-500 transition-colors"
-                        >
-                            {YEARS.map(y => (
-                                <option key={y} value={y}>{y === 'All' ? 'All Years' : y}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {loading ? (
-                        <div className="space-y-4">
-                            {[1, 2, 3].map(n => <Card key={n} className="h-32 bg-white/5 border-white/5 animate-pulse" />)}
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {filteredPapers.map((paper, i) => {
-                                const subjectData = SUBJECTS.find(s => s.id === paper.subjectId);
-
-                                return (
-                                    <motion.div
-                                        key={paper.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: i * 0.1 }}
-                                    >
-                                        <Card className="p-5 sm:p-6 bg-black/20 border-white/5 hover:border-white/15 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                                            <div className="flex items-start sm:items-center gap-5">
-                                                <div
-                                                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg"
-                                                    style={{ background: `linear-gradient(135deg, ${subjectData?.color || '#4f46e5'}40, ${subjectData?.color || '#4f46e5'}10)`, border: `1px solid ${subjectData?.color || '#4f46e5'}30` }}
-                                                >
-                                                    <span className="font-bold text-lg">{paper.year}</span>
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-1">
-                                                        <h3 className="text-xl font-bold text-white">{paper.title || `${paper.year} A/L ${subjectData?.name || 'Unknown'}`}</h3>
-                                                        {paper.isPremium && profile?.plan !== 'elite' && profile?.plan !== 'pro' && (
-                                                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 flex items-center gap-1">
-                                                                <Lock className="w-3 h-3" /> Premium
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-sm text-slate-400 flex items-center gap-3 flex-wrap">
-                                                        <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5" /> {paper.type}</span>
-                                                        <span className="w-1 h-1 rounded-full bg-slate-600" />
-                                                        <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {paper.duration} Mins</span>
-                                                        <span className="w-1 h-1 rounded-full bg-slate-600" />
-                                                        <span className="flex items-center gap-1"><Award className="w-3.5 h-3.5" /> {paper.marks} Marks</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
-                                                <Button variant="outline" className="flex-1 sm:flex-none bg-white/5 border-white/10 text-white hover:bg-white/10 gap-2">
-                                                    <Download className="w-4 h-4" /> PDF
-                                                </Button>
-                                                <Button className="flex-1 sm:flex-none bg-white text-black hover:bg-slate-200 font-bold gap-2">
-                                                    Start Exam <PlayCircle className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </Card>
-                                    </motion.div>
-                                );
-                            })}
-
-                            {!loading && filteredPapers.length === 0 && (
-                                <div className="p-12 text-center rounded-2xl border border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center">
-                                    <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center mb-4">
-                                        <FileText className="w-8 h-8 text-indigo-400" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Papers coming soon — check back!</h3>
-                                    <p className="text-slate-400 max-w-sm mx-auto">
-                                        Our content team is actively digitizing and verifying past papers for {activeSubject !== 'all' ? SUBJECTS.find(s => s.id === activeSubject)?.name : 'these subjects'}.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Sidebar Status */}
-                <div className="space-y-6">
-                    <Card className="p-6 border-white/5 bg-[#0b101a]">
-                        <h3 className="font-bold text-white mb-6 flex items-center gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-indigo-400" /> Topic-wise Papers
-                        </h3>
-
-                        <div className="space-y-4">
-                            <p className="text-sm text-slate-400 mb-4 leading-relaxed">
-                                Want to practice specific units instead of full papers?
-                            </p>
-
-                            <div className="space-y-2">
-                                {['Mechanics', 'Oscillations & Waves', 'Thermal Physics'].map((topic, i) => (
-                                    <button key={i} className="w-full p-3 rounded-xl border border-white/5 bg-black/20 hover:border-white/15 transition-all flex items-center justify-between group">
-                                        <span className="text-sm font-medium text-slate-300 group-hover:text-white">{topic}</span>
-                                        <span className="text-xs text-slate-500 bg-white/5 px-2 py-1 rounded-md">80+ Qs</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            <Button variant="outline" className="w-full mt-4 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
-                                View All Topics
-                            </Button>
-                        </div>
-                    </Card>
-
-                    {/* Premium Lock Demo */
-                        profile?.plan !== 'elite' && (
-                            <Card className="p-6 border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-600/10 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <Lock className="w-16 h-16 text-amber-500" />
-                                </div>
-                                <h3 className="font-bold text-white mb-2 flex items-center gap-2">
-                                    <span className="text-amber-400">Elite Plan Only</span>
-                                </h3>
-                                <p className="text-sm text-slate-300 mb-4 pr-6">
-                                    Unlock step-by-step video solutions from island-ranked tutors for every past paper question.
-                                </p>
-                                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold border-0">
-                                    Upgrade to Premium
-                                </Button>
-                            </Card>
-                        )}
-                </div>
-            </div>
-        </div>
+      <div className="pb-12">
+        <Card className="border-rose-400/20 bg-[#0b101a] py-6">
+          <CardContent className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">Unable to load papers</p>
+            <h1 className="text-2xl font-black text-white">Something went wrong while loading past papers.</h1>
+            <p className="max-w-2xl text-sm leading-6 text-slate-300">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
+  }
+
+  if (papers.length === 0) {
+    return (
+      <div className="pb-12">
+        <Card className="border-white/10 bg-[#0b101a] py-8">
+          <CardContent className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/15 text-violet-300">
+              <FileText className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-black text-white">Past Papers Coming Soon</h1>
+              <p className="max-w-xl text-sm leading-6 text-slate-300">
+                We are uploading past papers from 1995 to 2023. Check back very soon!
+              </p>
+            </div>
+            <Link
+              href="/dashboard/ai-tutor"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 font-semibold text-black transition hover:bg-slate-200"
+            >
+              Practice with AI Tutor instead
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-12">
+      <Card className="border-white/10 bg-[#0b101a] py-6">
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Past papers</p>
+            <h1 className="text-3xl font-black tracking-tight text-white">Practice real A/L exam papers with clean filters and fast access.</h1>
+            <p className="max-w-3xl text-sm leading-6 text-slate-300">
+              Filter by subject, year, and paper type, then jump straight into exam mode or premium solutions.
+            </p>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-[1.5fr_220px_220px]">
+            <div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+              {SUBJECT_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setSubjectFilter(tab.id)}
+                  className={[
+                    'rounded-xl px-4 py-2 text-sm font-semibold transition',
+                    subjectFilter === tab.id
+                      ? 'bg-white text-black'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                  ].join(' ')}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Year</span>
+              <select
+                value={yearFilter}
+                onChange={(event) => setYearFilter(event.target.value as YearFilter)}
+                className="h-12 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-sm font-medium text-white outline-none transition focus:border-violet-400"
+              >
+                {YEAR_OPTIONS.map((year) => (
+                  <option key={year} value={year} className="bg-[#0b101a] text-white">
+                    {year === 'all' ? 'All Years' : year}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Paper type</span>
+              <select
+                value={paperTypeFilter}
+                onChange={(event) => setPaperTypeFilter(event.target.value as PaperTypeFilter)}
+                className="h-12 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-sm font-medium text-white outline-none transition focus:border-violet-400"
+              >
+                {PAPER_TYPES.map((paperType) => (
+                  <option key={paperType} value={paperType} className="bg-[#0b101a] text-white">
+                    {paperType === 'all' ? 'All' : paperType}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {filteredPapers.length === 0 ? (
+        <Card className="border-white/10 bg-[#0b101a] py-8">
+          <CardContent className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/15 text-violet-300">
+              <Sparkles className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-white">No papers match these filters yet.</h2>
+              <p className="max-w-xl text-sm leading-6 text-slate-300">
+                Try a different subject, year, or paper type to see more papers.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredPapers.map((paper) => (
+            <Card key={paper.id} className="border-white/10 bg-[#0b101a] py-6">
+              <CardContent className="space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-3">
+                    <span
+                      className="inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
+                      style={{ backgroundColor: `${paper.subjectColor}20`, color: paper.subjectColor }}
+                    >
+                      {paper.year}
+                    </span>
+
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{paper.subjectName}</h3>
+                      <p className="mt-1 text-sm text-slate-400">{paper.type === 'Full' ? 'Full Paper' : paper.type}</p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
+                    style={{ backgroundColor: `${paper.subjectColor}15`, color: paper.subjectColor }}
+                  >
+                    {paper.subjectIcon}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Clock3 className="h-4 w-4" />
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em]">Duration</span>
+                    </div>
+                    <p className="mt-3 text-lg font-bold text-white">{paper.durationText}</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <FileText className="h-4 w-4" />
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em]">Marks</span>
+                    </div>
+                    <p className="mt-3 text-lg font-bold text-white">{paper.marks}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    href={`/dashboard/past-papers/${paper.id}/exam`}
+                    className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-slate-200"
+                  >
+                    Start Exam
+                  </Link>
+
+                  {paper.isPremium ? (
+                    hasPremiumAccess ? (
+                      <Link
+                        href={`/dashboard/past-papers/${paper.id}/solutions`}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/15"
+                      >
+                        View Solutions
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-slate-400"
+                      >
+                        <Lock className="h-4 w-4" />
+                        View Solutions
+                      </button>
+                    )
+                  ) : (
+                    <Link
+                      href={`/dashboard/past-papers/${paper.id}/solutions`}
+                      className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                    >
+                      View Solutions
+                    </Link>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
