@@ -12,35 +12,38 @@ type ServerEnv = PublicEnv & {
   firebaseAdminPrivateKey: string;
 };
 
+const DEFAULT_APP_URL = 'https://iconicacademy.lk';
+
 function assertPresent(name: string, value: string | undefined, errors: string[]) {
   if (!value || !value.trim()) {
     errors.push(name);
   }
 }
 
+function normaliseUrl(value: string) {
+  return value.trim().replace(/\/+$/, '');
+}
+
 function readPublicEnv(): PublicEnv {
-  const errors: string[] = [];
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const configuredAppUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.VERCEL_URL ||
+    DEFAULT_APP_URL;
 
-  assertPresent('NEXT_PUBLIC_APP_URL', appUrl, errors);
-  assertPresent('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', stripePublishableKey, errors);
-
-  if (errors.length > 0) {
-    throw new Error(
-      `Invalid public environment configuration. Missing: ${errors.join(', ')}`
-    );
-  }
+  const appUrl = configuredAppUrl.startsWith('http')
+    ? configuredAppUrl
+    : `https://${configuredAppUrl}`;
 
   return {
-    appUrl: appUrl!.trim().replace(/\/+$/, ''),
-    stripePublishableKey: stripePublishableKey!.trim(),
+    appUrl: normaliseUrl(appUrl),
+    stripePublishableKey: (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '').trim(),
   };
 }
 
 function readServerEnv(): ServerEnv {
   const errors: string[] = [];
-  const publicEnv = readPublicEnv();
+  const publicValues = readPublicEnv();
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const nextAuthSecret = process.env.NEXTAUTH_SECRET;
@@ -66,7 +69,7 @@ function readServerEnv(): ServerEnv {
   }
 
   return {
-    ...publicEnv,
+    ...publicValues,
     stripeSecretKey: stripeSecretKey!.trim(),
     stripeWebhookSecret: stripeWebhookSecret!.trim(),
     sessionSecret: (nextAuthSecret || supabaseJwtSecret)!.trim(),
@@ -76,9 +79,11 @@ function readServerEnv(): ServerEnv {
   };
 }
 
-export const publicEnv = readPublicEnv();
+export const publicEnv: PublicEnv = readPublicEnv();
 
-export const serverEnv =
-  typeof window === 'undefined'
-    ? readServerEnv()
-    : (null as never);
+export const serverEnv: ServerEnv = new Proxy({} as ServerEnv, {
+  get(_target, property) {
+    const env = readServerEnv();
+    return env[property as keyof ServerEnv];
+  },
+});
