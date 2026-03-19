@@ -7,9 +7,17 @@ import { withSecurity } from '@/lib/with-security';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(serverEnv.stripeSecretKey, {
-  apiVersion: '2023-10-16' as never,
-});
+let stripeInstance: Stripe | null = null;
+
+function getStripe() {
+  if (!stripeInstance) {
+    stripeInstance = new Stripe(serverEnv.stripeSecretKey, {
+      apiVersion: '2023-10-16' as never,
+    });
+  }
+
+  return stripeInstance;
+}
 
 function getSubscriptionPeriodEnd(subscription: Stripe.Subscription | Stripe.Response<Stripe.Subscription>) {
   const unixSeconds = (subscription as unknown as { current_period_end?: number }).current_period_end;
@@ -18,6 +26,7 @@ function getSubscriptionPeriodEnd(subscription: Stripe.Subscription | Stripe.Res
 
 export const POST = withSecurity(
   async (request: NextRequest) => {
+    const stripe = getStripe();
     const bodyText = await request.text();
     const signature = request.headers.get('stripe-signature') || '';
     let event: Stripe.Event;

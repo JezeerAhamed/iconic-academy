@@ -7,11 +7,20 @@ import { withSecurity } from '@/lib/with-security';
 
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(serverEnv.stripeSecretKey, {
-  apiVersion: '2023-10-16' as never,
-});
+let stripeInstance: Stripe | null = null;
+
+function getStripe() {
+  if (!stripeInstance) {
+    stripeInstance = new Stripe(serverEnv.stripeSecretKey, {
+      apiVersion: '2023-10-16' as never,
+    });
+  }
+
+  return stripeInstance;
+}
 
 export const POST = withSecurity(async (request: NextRequest) => {
+  const stripe = getStripe();
   const body = (await request.json()) as { userId?: string };
   const userId = sanitiseInput(body.userId || '', { maxLength: 128, stripHtml: false });
 
