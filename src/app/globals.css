@@ -180,7 +180,7 @@
   }
 
   .c-container {
-    @apply c-wrap;
+    @apply mx-auto max-w-site px-6;
   }
 
   .btn-primary {
@@ -224,15 +224,15 @@
   }
 
   .c-badge-blue {
-    @apply c-badge bg-cblue-50 text-cblue-600;
+    @apply inline-flex items-center rounded-sm bg-cblue-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-cblue-600;
   }
 
   .c-badge-green {
-    @apply c-badge bg-cgreen-50 text-cgreen-600;
+    @apply inline-flex items-center rounded-sm bg-cgreen-50 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-cgreen-600;
   }
 
   .c-badge-gray {
-    @apply c-badge bg-cgray-100 text-cgray-600;
+    @apply inline-flex items-center rounded-sm bg-cgray-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-cgray-600;
   }
 
   .c-divider {
