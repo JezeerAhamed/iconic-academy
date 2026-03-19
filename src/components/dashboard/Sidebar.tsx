@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -17,7 +18,6 @@ import {
     ShieldAlert,
     Settings,
     LogOut,
-    Zap,
     Flame,
     Menu,
     X,
@@ -90,10 +90,16 @@ export default function Sidebar() {
         <div className="relative z-20 flex h-full flex-col overflow-y-auto border-r border-white/5 bg-[#0b101a] scrollbar-thin">
             <div className="flex h-16 flex-shrink-0 items-center border-b border-white/5 px-5">
                 <Link href="/dashboard" className="group flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
-                        <Zap className="h-4 w-4 text-white" fill="currentColor" />
+                    <div className="relative h-10 w-[148px] overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg transition-transform duration-200 group-hover:scale-[1.02]">
+                        <Image
+                            src="/logo.jpg"
+                            alt="Iconic Academy"
+                            fill
+                            priority
+                            sizes="148px"
+                            className="object-cover"
+                        />
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-white">ICONIC</span>
                 </Link>
             </div>
 
@@ -249,10 +255,15 @@ export default function Sidebar() {
         <>
             <div className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/5 bg-[#0b101a]/90 px-4 backdrop-blur-xl md:hidden">
                 <Link href="/dashboard" className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-                        <Zap className="h-3.5 w-3.5 text-white" fill="currentColor" />
+                    <div className="relative h-8 w-[116px] overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                        <Image
+                            src="/logo.jpg"
+                            alt="Iconic Academy"
+                            fill
+                            sizes="116px"
+                            className="object-cover"
+                        />
                     </div>
-                    <span className="text-base font-bold text-white">ICONIC</span>
                 </Link>
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1 text-xs">
@@ -260,7 +271,7 @@ export default function Sidebar() {
                         <span className="font-bold text-orange-300">{gamData.streak}</span>
                     </div>
                     <div className="flex items-center gap-1 text-xs">
-                        <Zap className="h-3.5 w-3.5 text-yellow-400" />
+                        <span className="text-yellow-400">XP</span>
                         <span className="font-bold text-yellow-300">{profile?.xp ?? 0}</span>
                     </div>
                     <button onClick={() => setIsOpen(!isOpen)} className="p-1.5 text-slate-400 hover:text-white">

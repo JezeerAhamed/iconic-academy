@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -83,10 +84,16 @@ export default function AppNavbar() {
             <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 sm:px-6">
                 {/* Left: Logo */}
                 <Link href="/dashboard" className="flex items-center gap-2 group flex-shrink-0">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <Zap className="w-4 h-4 text-white" fill="currentColor" />
+                    <div className="relative h-9 w-[132px] overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg shadow-indigo-500/10 transition-transform duration-200 group-hover:scale-[1.02]">
+                        <Image
+                            src="/logo.jpg"
+                            alt="Iconic Academy"
+                            fill
+                            priority
+                            sizes="132px"
+                            className="object-cover"
+                        />
                     </div>
-                    <span className="font-bold text-lg tracking-tight text-white hidden sm:inline">ICONIC</span>
                 </Link>
 
                 {/* Center: Search Bar */}

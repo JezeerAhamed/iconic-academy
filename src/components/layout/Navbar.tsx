@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Zap, BookOpen, ChevronRight } from 'lucide-react';
+import { Menu, X, BookOpen, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NAV_LINKS } from '@/lib/constants';
@@ -38,17 +39,15 @@ export default function Navbar() {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2.5 group">
-                        <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-blue-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                            <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
-                            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-200" />
-                        </div>
-                        <div className="flex flex-col leading-none">
-                            <span className="text-base font-bold text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                                ICONIC
-                            </span>
-                            <span className="text-[10px] text-indigo-400 font-medium tracking-widest uppercase">
-                                Academy
-                            </span>
+                        <div className="relative h-11 w-[156px] overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg transition-transform duration-200 group-hover:scale-[1.02]">
+                            <Image
+                                src="/logo.jpg"
+                                alt="Iconic Academy"
+                                fill
+                                priority
+                                sizes="156px"
+                                className="object-cover"
+                            />
                         </div>
                     </Link>
 

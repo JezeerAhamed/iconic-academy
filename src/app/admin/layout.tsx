@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/contexts/AuthContext';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -70,11 +71,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Admin Sidebar */}
             <aside className="w-64 border-r border-white/5 bg-[#080c14] hidden md:flex flex-col">
                 <div className="p-6 border-b border-white/5">
-                    <Link href="/admin" className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-orange-600 flex items-center justify-center">
-                            <ShieldAlert className="w-4 h-4 text-white" />
+                    <Link href="/admin" className="flex items-center gap-3">
+                        <div className="relative h-11 w-[150px] overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg shadow-rose-500/10">
+                            <Image
+                                src="/logo.jpg"
+                                alt="Iconic Academy"
+                                fill
+                                priority
+                                sizes="150px"
+                                className="object-cover"
+                            />
                         </div>
-                        <span className="font-bold text-xl text-white tracking-tight">ICONIC <span className="text-rose-500">ADMIN</span></span>
+                        <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.18em] text-rose-400">
+                            Admin
+                        </span>
                     </Link>
                 </div>
 

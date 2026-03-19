@@ -39,17 +39,26 @@ export const metadata: Metadata = {
     description:
       "Master Sri Lankan A/L subjects with AI tutoring, past papers, and structured learning paths built for the local syllabus.",
     siteName: "ICONIC ACADEMY",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Iconic Academy",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "ICONIC ACADEMY",
     description:
       "Sri Lanka's A/L learning platform built for Physics, Chemistry, Biology, and Combined Maths.",
+    images: ["/og.png"],
   },
   icons: {
-    icon: "/icon",
-    shortcut: "/icon",
-    apple: "/icon",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
 };
 

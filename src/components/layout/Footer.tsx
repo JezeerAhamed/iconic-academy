@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Instagram, Mail, Phone, Twitter, Youtube, Zap } from 'lucide-react';
+import { Facebook, Instagram, Mail, MessageCircle, Phone, Youtube } from 'lucide-react';
 import { SUBJECTS } from '@/lib/constants';
 
 export default function Footer() {
@@ -18,14 +19,14 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-blue-500 shadow-lg">
-                <Zap className="h-5 w-5 text-white" strokeWidth={2.5} />
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="text-base font-bold tracking-tight text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                  ICONIC
-                </span>
-                <span className="text-[10px] font-medium uppercase tracking-widest text-indigo-400">Academy</span>
+              <div className="relative h-12 w-[180px] overflow-hidden rounded-xl border border-white/10 bg-white/5 shadow-lg">
+                <Image
+                  src="/logo.jpg"
+                  alt="Iconic Academy"
+                  fill
+                  sizes="180px"
+                  className="object-cover"
+                />
               </div>
             </Link>
 
@@ -34,9 +35,21 @@ export default function Footer() {
             </p>
 
             <div className="flex items-center gap-3">
-              <SocialLink href="#" icon={<Twitter className="h-4 w-4" />} />
-              <SocialLink href="#" icon={<Instagram className="h-4 w-4" />} />
-              <SocialLink href="#" icon={<Youtube className="h-4 w-4" />} />
+              <SocialLink
+                href="https://www.youtube.com/results?search_query=JR+Highlights"
+                label="YouTube: JR Highlights"
+                icon={<Youtube className="h-4 w-4" />}
+              />
+              <SocialLink
+                href="https://www.instagram.com/jezeerjrahamed/"
+                label="Instagram: @jezeerjrahamed"
+                icon={<Instagram className="h-4 w-4" />}
+              />
+              <SocialLink
+                href="https://www.facebook.com/search/top/?q=Iconic%20Academy"
+                label="Facebook: Iconic Academy"
+                icon={<Facebook className="h-4 w-4" />}
+              />
             </div>
           </div>
 
@@ -79,15 +92,26 @@ export default function Footer() {
             <h4 className="text-sm font-semibold tracking-wide text-white">Contact</h4>
             <ul className="space-y-3">
               <li>
-                <a href="mailto:hello@iconicacademy.lk" className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-white">
+                <a href="mailto:jezeerahamed254@gmail.com" className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-white">
                   <Mail className="h-4 w-4 shrink-0 text-indigo-400" />
-                  hello@iconicacademy.lk
+                  jezeerahamed254@gmail.com
                 </a>
               </li>
               <li>
-                <a href="tel:+94761234567" className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-white">
+                <a href="tel:+94771041815" className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-white">
                   <Phone className="h-4 w-4 shrink-0 text-indigo-400" />
-                  +94 76 123 4567
+                  +94 7710 41 815
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/94771041815"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 text-sm text-slate-500 transition-colors hover:text-white"
+                >
+                  <MessageCircle className="h-4 w-4 shrink-0 text-indigo-400" />
+                  WhatsApp: +94 7710 41 815
                 </a>
               </li>
             </ul>
@@ -116,12 +140,14 @@ export default function Footer() {
   );
 }
 
-function SocialLink({ href, icon }: { href: string; icon: React.ReactNode }) {
+function SocialLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
       className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-400 transition-all duration-200 hover:border-indigo-500/30 hover:bg-indigo-500/20 hover:text-white"
     >
       {icon}

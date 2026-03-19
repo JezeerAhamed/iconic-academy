@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Zap, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function SignUpCardSkeleton() {
@@ -93,9 +94,18 @@ function SignUpPageContent() {
                     <div className="mb-8 text-center">
                         <Link
                             href="/"
-                            className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25"
+                            className="mb-6 inline-flex items-center justify-center"
                         >
-                            <Zap className="h-6 w-6 text-white" fill="currentColor" />
+                            <div className="relative h-14 w-[180px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-indigo-500/15">
+                                <Image
+                                    src="/logo.jpg"
+                                    alt="Iconic Academy"
+                                    fill
+                                    priority
+                                    sizes="180px"
+                                    className="object-cover"
+                                />
+                            </div>
                         </Link>
                         <h1 className="mb-2 text-3xl font-bold tracking-tight text-white">Create Account</h1>
                         <p className="text-sm text-slate-400">

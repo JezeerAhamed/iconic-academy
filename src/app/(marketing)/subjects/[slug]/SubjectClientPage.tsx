@@ -13,6 +13,9 @@ interface Unit {
     id: string;
     title: string;
     description: string;
+    titleTa?: string;
+    totalPeriods?: number;
+    outlineTa?: string;
 }
 
 export default function SubjectClientPage({
@@ -26,6 +29,7 @@ export default function SubjectClientPage({
     const router = useRouter();
 
     const isPremium = profile?.plan === 'pro' || profile?.plan === 'elite';
+    const tamilOutlineUnits = syllabus.filter((unit) => unit.outlineTa);
 
     const handleUnitClick = (index: number) => {
         if (!user) {
@@ -142,6 +146,11 @@ export default function SubjectClientPage({
                                         <h3 className="text-lg font-bold text-white mb-2 leading-tight">
                                             {unit.title}
                                         </h3>
+                                        {unit.titleTa ? (
+                                            <p className="mb-2 text-sm font-medium text-indigo-300">
+                                                {unit.titleTa}
+                                            </p>
+                                        ) : null}
                                         <p className="text-sm text-slate-400 leading-relaxed mb-6">
                                             {unit.description}
                                         </p>
@@ -155,7 +164,7 @@ export default function SubjectClientPage({
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Clock className="w-4 h-4" />
-                                            <span>~4 Hours</span>
+                                            <span>{unit.totalPeriods ? `${unit.totalPeriods} Periods` : '~4 Hours'}</span>
                                         </div>
                                     </div>
 
@@ -179,6 +188,50 @@ export default function SubjectClientPage({
                         );
                     })}
                 </div>
+
+                {tamilOutlineUnits.length > 0 ? (
+                    <section className="mt-16">
+                        <div className="mb-8 max-w-3xl">
+                            <h3 className="text-2xl font-bold text-white">Detailed Tamil Syllabus Outline</h3>
+                            <p className="mt-3 text-slate-400">
+                                The Physics syllabus you provided is now connected to this page. Open any unit below to view the
+                                full Tamil outline and teaching periods.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            {tamilOutlineUnits.map((unit, index) => (
+                                <details
+                                    key={`${unit.id}-outline`}
+                                    className="group overflow-hidden rounded-2xl border border-white/10 bg-[#0b101a]"
+                                >
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+                                        <div>
+                                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
+                                                Unit {index + 1}
+                                            </p>
+                                            <h4 className="mt-1 text-lg font-bold text-white">
+                                                {unit.title}
+                                                {unit.titleTa ? (
+                                                    <span className="ml-2 text-base font-medium text-slate-400">| {unit.titleTa}</span>
+                                                ) : null}
+                                            </h4>
+                                        </div>
+                                        <Badge className="border-white/10 bg-white/5 text-slate-300">
+                                            {unit.totalPeriods} பாடவேளைகள்
+                                        </Badge>
+                                    </summary>
+
+                                    <div className="border-t border-white/5 px-5 py-5">
+                                        <div className="whitespace-pre-line text-sm leading-7 text-slate-300">
+                                            {unit.outlineTa}
+                                        </div>
+                                    </div>
+                                </details>
+                            ))}
+                        </div>
+                    </section>
+                ) : null}
 
                 {/* CTA Action Bar */}
                 {!isPremium && (

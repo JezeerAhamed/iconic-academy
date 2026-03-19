@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -7,7 +8,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Zap, Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -61,8 +62,17 @@ export default function LoginPage() {
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-50" />
 
                     <div className="text-center mb-8">
-                        <Link href="/" className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-6 shadow-lg shadow-indigo-500/25">
-                            <Zap className="w-6 h-6 text-white" fill="currentColor" />
+                        <Link href="/" className="mb-6 inline-flex items-center justify-center">
+                            <div className="relative h-14 w-[180px] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-indigo-500/15">
+                                <Image
+                                    src="/logo.jpg"
+                                    alt="Iconic Academy"
+                                    fill
+                                    priority
+                                    sizes="180px"
+                                    className="object-cover"
+                                />
+                            </div>
                         </Link>
                         <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome back</h1>
                         <p className="text-slate-400 text-sm">Sign in to continue your learning journey</p>
